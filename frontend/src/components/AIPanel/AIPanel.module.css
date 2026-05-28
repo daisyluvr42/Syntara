@@ -1,0 +1,700 @@
+/* ========== Inline bottom panel mode ========== */
+.inlinePanel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border-primary);
+  box-shadow: var(--shadow-up-sm);
+  overflow: hidden;
+}
+
+.inlineTabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-primary);
+  background: var(--color-bg-secondary);
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.inlineTabs .tab {
+  padding: 8px 14px;
+  font-size: 12px;
+  flex: none;
+}
+
+.inlineCloseBtn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 4px 10px;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast), background var(--transition-fast);
+}
+
+.inlineCloseBtn:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+/* ========== Dialog mode ========== */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(2px);
+}
+
+.dialog {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.closeBtn:hover {
+  color: var(--color-text-primary);
+}
+
+/* ========== Shared tabs ========== */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.tab:hover {
+  color: var(--color-text-secondary);
+}
+
+.tabActive {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+/* ========== Body ========== */
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+}
+
+/* ========== Actions tab ========== */
+.actionsTab {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.actionGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actionBtn {
+  padding: 7px 14px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-primary);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.actionBtn:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-text-tertiary);
+}
+
+.actionActive {
+  background: var(--color-accent);
+  color: white;
+  border-color: var(--color-accent);
+}
+
+.actionActive:hover {
+  background: var(--color-accent-hover);
+  border-color: var(--color-accent-hover);
+}
+
+.langRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.langRow select {
+  padding: 5px 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+}
+
+/* ========== RAG tab ========== */
+.ragTab {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ragInput {
+  width: 100%;
+  min-height: 72px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.ragInput:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(74, 143, 231, 0.1);
+  outline: none;
+}
+
+/* ========== Shared buttons ========== */
+.runBtn {
+  padding: 8px 18px;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background var(--transition-fast);
+}
+
+.runBtn:hover {
+  background: var(--color-accent-hover);
+}
+
+.runBtn:disabled {
+  background: var(--color-accent-muted);
+  cursor: default;
+}
+
+.secondaryBtn {
+  padding: 8px 14px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.secondaryBtn:hover {
+  background: var(--color-bg-hover);
+  border-color: var(--color-text-tertiary);
+}
+
+.secondaryBtn:disabled {
+  color: var(--color-text-placeholder);
+  background: var(--color-bg-secondary);
+  cursor: default;
+}
+
+/* ========== Workflow tab ========== */
+.workflowTab {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.workflowSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.fieldLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.workflowSelect {
+  padding: 7px 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+.templateDescription {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+}
+
+.workflowSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.workflowStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  border: 1px solid var(--color-border-primary);
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.workflowStepDone {
+  background: var(--color-accent-light);
+  border-color: var(--color-accent-muted);
+  color: var(--color-accent-hover);
+}
+
+.workflowStepCurrent {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: white;
+}
+
+.workflowStepPending {
+  background: var(--color-bg-secondary);
+}
+
+.workflowStepIndex {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+  color: inherit;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.workflowControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.corpusRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-md);
+}
+
+.corpusHint {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+}
+
+.corpusBtn {
+  padding: 4px 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.corpusBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.workflowInput {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.6;
+  resize: vertical;
+  font-family: inherit;
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+}
+
+.workflowInput:focus {
+  border-color: var(--color-border-focus);
+  outline: none;
+}
+
+.workflowStatus {
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border-secondary);
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.workflowHistory {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.workflowHistoryItem {
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.workflowHistoryHeader {
+  padding: 6px 12px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.workflowHistoryOutput {
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 140px;
+  overflow-y: auto;
+  color: var(--color-text-primary);
+}
+
+/* ========== Result area ========== */
+.resultArea {
+  margin-top: 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.insertBtn {
+  padding: 4px 12px;
+  background: var(--color-green);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.insertBtn:hover {
+  background: #268c42;
+}
+
+.resultText {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+  color: var(--color-text-primary);
+}
+
+.sources {
+  padding: 8px 12px;
+  border-top: 1px solid var(--color-border-secondary);
+  background: var(--color-bg-secondary);
+  font-size: 11px;
+}
+
+.sourceItem {
+  display: flex;
+  gap: 6px;
+  margin-top: 3px;
+  color: var(--color-text-secondary);
+}
+
+.citeKey {
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  flex-shrink: 0;
+}
+
+/* ========== Providers tab ========== */
+.providersTab {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.providerList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.providerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.providerItem:hover {
+  border-color: var(--color-border-primary);
+}
+
+.providerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.providerNameRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.providerType {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  background: var(--color-bg-tertiary);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.providerBadge {
+  font-size: 10px;
+  color: #fff;
+  background: var(--color-green);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.providerDetail {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.providerActions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.providerEditBtn {
+  padding: 4px 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  font-size: 11px;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.providerEditBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.providerDeleteBtn {
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-primary);
+  font-size: 14px;
+  cursor: pointer;
+  color: var(--color-text-placeholder);
+  line-height: 1;
+  transition: all var(--transition-fast);
+}
+
+.providerDeleteBtn:hover {
+  color: var(--color-red);
+  border-color: var(--color-red);
+}
+
+.providerEmpty {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.providerAddBtn {
+  padding: 7px 14px;
+  border: 1px dashed var(--color-border-primary);
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  align-self: flex-start;
+  transition: all var(--transition-fast);
+}
+
+.providerAddBtn:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.providerForm {
+  padding: 14px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.providerForm h4 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.providerField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.providerHint {
+  padding: 8px 10px;
+  background: var(--color-accent-light);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  color: var(--color-accent-hover);
+  line-height: 1.5;
+}
+
+.providerField select,
+.providerField input {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.providerField input:focus,
+.providerField select:focus {
+  border-color: var(--color-border-focus);
+  outline: none;
+}
+
+.providerCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.providerFormActions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}

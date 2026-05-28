@@ -1,0 +1,57 @@
+.wrapper {
+  position: relative;
+}
+
+.inputContainer {
+  position: relative;
+}
+
+.ghost {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+
+.ghostHidden {
+  visibility: hidden;
+}
+
+.ghostSuffix {
+  color: #b0b8c4;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid #dde5ef;
+  border-radius: 8px;
+  margin-top: 4px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.suggestion {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.suggestion:hover,
+.suggestionActive {
+  background: #f0f5ff;
+  color: #1e40af;
+}

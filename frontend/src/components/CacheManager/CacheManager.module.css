@@ -1,0 +1,173 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: white;
+  border-radius: 12px;
+  width: 640px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.headerStats {
+  font-size: 13px;
+  color: #666;
+  margin-left: 12px;
+  font-weight: 400;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  color: #333;
+}
+
+.listSection {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 20px;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.item:hover {
+  border-color: #d0d0d0;
+}
+
+.itemInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemTitle {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.itemMeta {
+  font-size: 11px;
+  color: #999;
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badgeOcr {
+  background: #fff3e0;
+  color: #e65100;
+}
+
+.badgeOdl {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.badgeUnknown {
+  background: #f5f5f5;
+  color: #757575;
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #ccc;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.deleteBtn:hover {
+  color: #e53e3e;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 12px 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.clearBtn {
+  padding: 7px 16px;
+  background: #e53e3e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.clearBtn:hover {
+  background: #c53030;
+}
+
+.clearBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.empty {
+  padding: 32px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}
+
+.loading {
+  padding: 32px 20px;
+  text-align: center;
+  color: #999;
+  font-size: 13px;
+}

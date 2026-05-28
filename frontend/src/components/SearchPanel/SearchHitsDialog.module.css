@@ -1,0 +1,241 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 24, 40, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+}
+
+.dialog {
+  width: min(960px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.18);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #e7ebf0;
+}
+
+.header h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.35;
+}
+
+.meta {
+  margin-top: 6px;
+  color: #5b6472;
+  font-size: 13px;
+}
+
+.closeBtn {
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  line-height: 1;
+  color: #697586;
+  cursor: pointer;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #eef2f6;
+  background: #fafbfd;
+  align-items: center;
+}
+
+.primaryBtn,
+.secondaryBtn,
+.copyBtn,
+.contextBtn {
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.primaryBtn {
+  background: #2f7de1;
+  color: #fff;
+  padding: 10px 14px;
+}
+
+.secondaryBtn {
+  background: #e7eef8;
+  color: #245ba7;
+  padding: 10px 14px;
+}
+
+.copyBtn {
+  background: #f1f4f8;
+  color: #425466;
+  padding: 8px 12px;
+}
+
+.contextBtn {
+  background: #f0f7ff;
+  color: #2f7de1;
+  padding: 8px 12px;
+}
+
+.contextBtn:hover {
+  background: #dfeeff;
+}
+
+.dismissBtn {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 20px;
+  line-height: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.dismissBtn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.dismissedCount {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.body {
+  padding: 18px 20px 20px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hitCard {
+  border: 1px solid #dde5ef;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+}
+
+.hitHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.hitMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.hitActions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.hitIndex {
+  font-size: 12px;
+  font-weight: 700;
+  color: #245ba7;
+}
+
+.hitBadge,
+.hitTag {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.hitBadge {
+  background: #eef4ff;
+  color: #2f5aa8;
+}
+
+.hitTag {
+  background: #f5f7fa;
+  color: #516072;
+}
+
+.hitContent {
+  margin-top: 12px;
+  color: #253041;
+  font-size: 14px;
+  line-height: 1.7;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.highlight {
+  background: #ffec99;
+  color: inherit;
+  padding: 0;
+}
+
+/* Context viewer */
+.contextLoading {
+  margin-top: 10px;
+  color: #94a3b8;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.contextPanel {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f8fafc;
+}
+
+.contextPageHeader {
+  padding: 8px 14px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f1f5f9;
+}
+
+.contextPageText {
+  padding: 16px 18px;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: #334155;
+  white-space: normal;
+  word-break: break-word;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.contextHighlight {
+  background: #fef08a;
+  border-radius: 2px;
+  padding: 1px 0;
+}
+
+.emptyState {
+  text-align: center;
+  color: #94a3b8;
+  padding: 32px 0;
+  font-size: 14px;
+}

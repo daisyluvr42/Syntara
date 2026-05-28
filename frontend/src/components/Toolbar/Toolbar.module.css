@@ -1,0 +1,167 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border-primary);
+  box-shadow: var(--shadow-xs);
+  gap: 8px;
+  flex-shrink: 0;
+  z-index: 10;
+  position: relative;
+}
+
+.left, .right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border-primary);
+  margin: 0 6px;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--color-accent);
+  letter-spacing: -0.03em;
+  user-select: none;
+}
+
+.titleInput {
+  padding: 6px 14px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  min-width: 200px;
+  max-width: 400px;
+  background: transparent;
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.titleInput:hover {
+  border-color: var(--color-border-primary);
+  background: var(--color-bg-hover);
+}
+
+.titleInput:focus {
+  border-color: var(--color-border-focus);
+  background: var(--color-bg-primary);
+  box-shadow: 0 0 0 3px rgba(74, 143, 231, 0.1);
+}
+
+/* Action buttons (New / Save / Export) */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.btn:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.btn:active {
+  background: var(--color-bg-tertiary);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* Toggle buttons (Library / Search / AI) */
+.btnToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+.btnToggle:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.btnToggleActive {
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  border-color: var(--color-accent-muted);
+}
+
+.btnToggleActive:hover {
+  background: var(--color-accent-light);
+  color: var(--color-accent-hover);
+}
+
+/* Format Citations dropdown */
+.formatGroup {
+  position: relative;
+}
+
+.styleMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+  z-index: 200;
+  min-width: 180px;
+  overflow: hidden;
+}
+
+.styleOption {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: none;
+  font-size: 13px;
+  text-align: left;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.styleOption:hover {
+  background: var(--color-bg-hover);
+  color: var(--color-accent);
+}

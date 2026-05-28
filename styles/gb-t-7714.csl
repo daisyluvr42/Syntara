@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" class="in-text" version="1.0" demote-non-dropping-particle="never" default-locale="zh-CN">
+  <info>
+    <title>GB/T 7714-2015 (Chinese)</title>
+    <id>http://www.zotero.org/styles/gb-t-7714</id>
+    <category citation-format="numeric"/>
+    <category field="generic-base"/>
+    <summary>Chinese national standard GB/T 7714-2015 (simplified)</summary>
+    <updated>2024-01-01T00:00:00+00:00</updated>
+    <rights license="http://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</rights>
+  </info>
+  <macro name="author">
+    <names variable="author">
+      <name sort-separator=" " initialize-with="" name-as-sort-order="all" delimiter=", " delimiter-precedes-last="always"/>
+    </names>
+  </macro>
+  <macro name="title">
+    <text variable="title"/>
+  </macro>
+  <macro name="year">
+    <date variable="issued">
+      <date-part name="year"/>
+    </date>
+  </macro>
+  <citation collapse="citation-number">
+    <sort>
+      <key variable="citation-number"/>
+    </sort>
+    <layout prefix="[" suffix="]" delimiter=",">
+      <text variable="citation-number"/>
+    </layout>
+  </citation>
+  <bibliography et-al-min="4" et-al-use-first="3" second-field-align="flush">
+    <layout suffix=".">
+      <text variable="citation-number" prefix="[" suffix="] "/>
+      <text macro="author" suffix=". "/>
+      <text macro="title"/>
+      <choose>
+        <if type="article-journal">
+          <text value="[J]" suffix=". "/>
+          <text variable="container-title" suffix=", "/>
+          <text macro="year" suffix=", "/>
+          <text variable="volume"/>
+          <text variable="issue" prefix="(" suffix=")"/>
+          <text variable="page" prefix=": "/>
+        </if>
+        <else-if type="book">
+          <text value="[M]" suffix=". "/>
+          <text variable="publisher-place" suffix=": "/>
+          <text variable="publisher" suffix=", "/>
+          <text macro="year"/>
+        </else-if>
+        <else-if type="chapter">
+          <text value="[M]" suffix="//"/>
+          <text variable="container-title" suffix=". "/>
+          <text variable="publisher-place" suffix=": "/>
+          <text variable="publisher" suffix=", "/>
+          <text macro="year" suffix=": "/>
+          <text variable="page"/>
+        </else-if>
+        <else>
+          <text variable="publisher-place" suffix=": "/>
+          <text variable="publisher" suffix=", "/>
+          <text macro="year"/>
+        </else>
+      </choose>
+    </layout>
+  </bibliography>
+</style>

@@ -1,0 +1,224 @@
+/* Syntara — Global layout & design tokens */
+
+:root {
+  /* Color Palette */
+  --color-bg-primary: #ffffff;
+  --color-bg-secondary: #f8f9fb;
+  --color-bg-tertiary: #f1f3f5;
+  --color-bg-hover: #f5f6f8;
+  --color-bg-active: #edf2fc;
+  --color-bg-app: #f7f8fa;
+
+  --color-border-primary: #e2e5ea;
+  --color-border-secondary: #eceef1;
+  --color-border-focus: #4a8fe7;
+
+  --color-text-primary: #1a1d23;
+  --color-text-secondary: #5f6672;
+  --color-text-tertiary: #8b919c;
+  --color-text-placeholder: #adb3bd;
+
+  --color-accent: #4a8fe7;
+  --color-accent-hover: #3b7dd4;
+  --color-accent-light: #edf2fc;
+  --color-accent-muted: #a4c5f0;
+
+  --color-green: #2da44e;
+  --color-green-light: #dafbe1;
+  --color-red: #cf222e;
+  --color-red-light: #ffebe9;
+  --color-amber: #d4a72c;
+  --color-amber-light: #fff8c5;
+
+  /* Typography */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, 'Helvetica Neue', sans-serif;
+  --font-mono: 'SF Mono', 'Menlo', 'Consolas', monospace;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  --shadow-up-sm: 0 -2px 8px rgba(0,0,0,0.04);
+
+  /* Radii */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 999px;
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-normal: 200ms ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: var(--color-bg-app);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.app-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.panel-left {
+  flex-shrink: 0;
+  overflow: hidden;
+  animation: slideInLeft var(--transition-normal);
+}
+
+.panel-center {
+  flex: 1;
+  min-width: 300px;
+  overflow: hidden;
+  background: var(--color-bg-primary);
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-area {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ai-panel-area {
+  flex-shrink: 0;
+  overflow: hidden;
+  animation: slideUpFade var(--transition-normal);
+}
+
+.panel-right {
+  flex-shrink: 0;
+  overflow: hidden;
+  animation: slideInRight var(--transition-normal);
+}
+
+/* ========== Resize handles ========== */
+
+/* Vertical resize handle (between columns) */
+.resize-handle-v {
+  width: 6px;
+  flex-shrink: 0;
+  cursor: col-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 5;
+}
+
+.resize-handle-v::before {
+  content: "";
+  position: absolute;
+  inset: 0 -3px;
+}
+
+.resize-handle-v-line {
+  width: 1px;
+  height: 100%;
+  background: var(--color-border-primary);
+  transition: background var(--transition-fast), width var(--transition-fast);
+  border-radius: 1px;
+}
+
+.resize-handle-v:hover .resize-handle-v-line {
+  width: 3px;
+  background: var(--color-accent-muted);
+}
+
+.resize-handle-v:active .resize-handle-v-line {
+  width: 3px;
+  background: var(--color-accent);
+}
+
+/* Horizontal resize handle (between rows) */
+.resize-handle-h {
+  height: 6px;
+  flex-shrink: 0;
+  cursor: row-resize;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 5;
+}
+
+.resize-handle-h::before {
+  content: "";
+  position: absolute;
+  inset: -3px 0;
+}
+
+.resize-handle-h-line {
+  height: 1px;
+  width: 100%;
+  background: var(--color-border-primary);
+  transition: background var(--transition-fast), height var(--transition-fast);
+  border-radius: 1px;
+}
+
+.resize-handle-h:hover .resize-handle-h-line {
+  height: 3px;
+  background: var(--color-accent-muted);
+}
+
+.resize-handle-h:active .resize-handle-h-line {
+  height: 3px;
+  background: var(--color-accent);
+}
+
+/* Animations */
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-primary);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+}

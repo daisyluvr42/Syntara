@@ -1,0 +1,42 @@
+.bar {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border-primary);
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  gap: 16px;
+  height: 28px;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.statusDot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.ok {
+  color: var(--color-green);
+}
+
+.dotOk {
+  background: var(--color-green);
+}
+
+.warn {
+  color: var(--color-amber);
+}
+
+.dotWarn {
+  background: var(--color-amber);
+}

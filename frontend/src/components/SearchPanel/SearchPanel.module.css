@@ -1,0 +1,240 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg-primary);
+}
+
+.searchBox {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fieldGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fieldLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+  color: var(--color-text-primary);
+  background: var(--color-bg-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.input:focus {
+  border-color: var(--color-border-focus);
+  box-shadow: 0 0 0 3px rgba(74, 143, 231, 0.1);
+}
+
+.input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.searchBtn {
+  padding: 9px 16px;
+  background: var(--color-accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.searchBtn:hover {
+  background: var(--color-accent-hover);
+}
+
+.searchBtn:disabled {
+  background: var(--color-accent-muted);
+  cursor: default;
+}
+
+.warningBanner,
+.queryInfo {
+  font-size: 12px;
+  line-height: 1.5;
+  border-radius: var(--radius-md);
+  padding: 8px 10px;
+}
+
+.warningBanner {
+  background: var(--color-amber-light);
+  color: #9a5200;
+}
+
+.queryInfo {
+  background: var(--color-accent-light);
+  color: var(--color-text-secondary);
+}
+
+.queryInfoRow + .queryInfoRow {
+  margin-top: 4px;
+}
+
+.results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.noResults {
+  padding: 24px;
+  text-align: center;
+  color: var(--color-text-tertiary);
+  font-size: 13px;
+}
+
+.resultItem {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  margin: 0 6px;
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+}
+
+.resultItem:hover {
+  background: var(--color-bg-hover);
+}
+
+.resultItem.selected {
+  background: var(--color-accent-light);
+}
+
+.checkbox {
+  padding-top: 4px;
+  flex-shrink: 0;
+}
+
+.checkbox input {
+  cursor: pointer;
+  accent-color: var(--color-accent);
+}
+
+.resultBody {
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+}
+
+.resultBody:hover .resultTitle {
+  color: var(--color-accent);
+}
+
+.resultTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.resultTitle {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-text-primary);
+  transition: color var(--transition-fast);
+}
+
+.hitCount {
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-light);
+  color: var(--color-accent);
+  padding: 2px 8px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.resultMeta {
+  font-size: 12px;
+  color: var(--color-text-tertiary);
+  margin-top: 3px;
+}
+
+.resultJournal {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.resultSnippet {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+  line-height: 1.55;
+  word-break: break-word;
+}
+
+.resultFooter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.metaBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-tertiary);
+  padding: 2px 7px;
+  font-size: 10px;
+}
+
+.highlight {
+  background: #fef3c7;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}
+
+.insertBar {
+  padding: 10px 12px;
+  border-top: 1px solid var(--color-border-primary);
+  background: var(--color-bg-secondary);
+}
+
+.insertBtn {
+  width: 100%;
+  padding: 9px;
+  background: var(--color-green);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.insertBtn:hover {
+  background: #268c42;
+}
