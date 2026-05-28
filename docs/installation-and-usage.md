@@ -92,12 +92,13 @@ skills/syntara-academic-writing
 skills/syntara-literature-review
 ```
 
-把它们复制到 WorkBuddy 的 Skill 目录。若你的 WorkBuddy Skill 目录是 `~/Documents/WorkBuddySkills`，可以执行：
+把它们复制到 WorkBuddy 的本地 Skill 目录：
 
 ```bash
-mkdir -p ~/Documents/WorkBuddySkills
-cp -R skills/syntara-academic-writing ~/Documents/WorkBuddySkills/
-cp -R skills/syntara-literature-review ~/Documents/WorkBuddySkills/
+mkdir -p ~/.workbuddy/skills
+rm -rf ~/.workbuddy/skills/syntara-academic-writing ~/.workbuddy/skills/syntara-literature-review
+cp -R skills/syntara-academic-writing ~/.workbuddy/skills/
+cp -R skills/syntara-literature-review ~/.workbuddy/skills/
 ```
 
 然后在 WorkBuddy 中刷新 Skill 列表。
@@ -384,12 +385,13 @@ skills/syntara-academic-writing
 skills/syntara-literature-review
 ```
 
-Copy them into your WorkBuddy skills directory. If your directory is `~/Documents/WorkBuddySkills`, run:
+Copy them into WorkBuddy's local skills directory:
 
 ```bash
-mkdir -p ~/Documents/WorkBuddySkills
-cp -R skills/syntara-academic-writing ~/Documents/WorkBuddySkills/
-cp -R skills/syntara-literature-review ~/Documents/WorkBuddySkills/
+mkdir -p ~/.workbuddy/skills
+rm -rf ~/.workbuddy/skills/syntara-academic-writing ~/.workbuddy/skills/syntara-literature-review
+cp -R skills/syntara-academic-writing ~/.workbuddy/skills/
+cp -R skills/syntara-literature-review ~/.workbuddy/skills/
 ```
 
 Then refresh the WorkBuddy skill list.
