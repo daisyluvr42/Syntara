@@ -12,8 +12,8 @@ from backend.models.corpus import Corpus, CorpusFileType
 from backend.services.indexer import index_corpus, remove_index
 from backend.services.extract_cache import load_cached, save_cache
 from backend.services.ocr_extractor import is_scanned_pdf, ocr_extract_structured
-from backend.services.odl_extractor import extract_structured
 from backend.services.pdf_extractor import compute_file_hash, pymupdf_extract_structured
+from backend.services.structured_extractor import extract_structured
 
 
 async def import_corpus_file(
@@ -51,10 +51,8 @@ async def import_corpus_file(
             structured_elements = ocr_extract_structured(file_path)
             save_cache(file_hash, structured_elements)
         else:
-            try:
-                structured_elements = extract_structured(file_path)
-            except Exception:
-                structured_elements = pymupdf_extract_structured(file_path)
+            quick_elements = pymupdf_extract_structured(file_path)
+            structured_elements = extract_structured(file_path, quick_elements=quick_elements)
             save_cache(file_hash, structured_elements)
         content = "\n\n".join(el["content"] for el in structured_elements)
     else:

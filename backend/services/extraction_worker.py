@@ -1,6 +1,6 @@
 """Subprocess-based extraction worker.
 
-Runs heavy PDF extraction (PyMuPDF / OCR / ODL) in an isolated subprocess
+Runs heavy PDF extraction (PyMuPDF / OCR / structured parser) in an isolated subprocess
 so that crashes (segfault, OOM) don't bring down the main API server.
 
 Communication is via SQLite writes (progress, status) + extract_cache files.
@@ -129,15 +129,15 @@ def run_extraction(
                 _update_progress(db, lit_id, "structure_extract", 1, 1)
                 structured = quick_elements
             else:
-                try:
-                    from backend.services.odl_extractor import extract_structured
-                    _update_progress(db, lit_id, "structure_extract", 0, 1)
-                    logger.info("Tier 2: ODL %s (%.0f MB)", file_path.name, size_mb)
-                    structured = extract_structured(file_path)
-                    _update_progress(db, lit_id, "structure_extract", 1, 1)
-                except Exception as e:
-                    logger.warning("ODL failed: %s — using PyMuPDF", e)
-                    structured = quick_elements
+                from backend.services.structured_extractor import extract_structured
+                _update_progress(db, lit_id, "structure_extract", 0, 1)
+                logger.info("Tier 2: structured parser %s (%.0f MB)", file_path.name, size_mb)
+                structured = extract_structured(
+                    file_path,
+                    quick_elements=quick_elements,
+                    progress_callback=lambda c, t: _update_progress(db, lit_id, "structure_extract", c, t),
+                )
+                _update_progress(db, lit_id, "structure_extract", 1, 1)
 
             save_cache(file_hash, structured)
 

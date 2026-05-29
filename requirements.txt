@@ -1,6 +1,7 @@
 fastapi>=0.110
 uvicorn[standard]
 pymupdf>=1.24
+liteparse>=2.0.3
 opendataloader-pdf>=2.0
 requests
 httpx

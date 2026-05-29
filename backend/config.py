@@ -96,7 +96,7 @@ PORT = int(os.getenv("SYNTARA_PORT", "8888"))
 # Pandoc
 PANDOC_PATH = os.getenv("PANDOC_PATH", "pandoc")
 
-# Extraction cache (persisted OCR / ODL results)
+# Extraction cache (persisted OCR / structured parser results)
 EXTRACT_CACHE_DIR = DATA_DIR / "extract_cache"
 
 # Document tree cache (PageIndex-style hierarchical trees)
@@ -106,6 +106,14 @@ DOC_TREE_DIR = DATA_DIR / "doc_trees"
 ODL_OUTPUT_DIR = DATA_DIR / "odl_cache"
 ODL_FORMAT = os.getenv("ODL_FORMAT", "json")
 ODL_MODE = os.getenv("ODL_MODE", "fast")  # "fast" or "hybrid"
+
+# Structured PDF extraction
+PDF_STRUCTURED_ENGINE = os.getenv("PDF_STRUCTURED_ENGINE", "liteparse")
+LITEPARSE_MAX_PAGES = int(os.getenv("LITEPARSE_MAX_PAGES", "1000"))
+LITEPARSE_DPI = int(os.getenv("LITEPARSE_DPI", "150"))
+LITEPARSE_OCR_SERVER_URL = os.getenv("LITEPARSE_OCR_SERVER_URL", "")
+LITEPARSE_OCR_LANGUAGE = os.getenv("LITEPARSE_OCR_LANGUAGE", "zh")
+LITEPARSE_NUM_WORKERS = int(os.getenv("LITEPARSE_NUM_WORKERS", "2"))
 
 # Ensure data directories exist
 for d in [DATA_DIR, CHROMADB_DIR, FILES_DIR, CORPUS_DIR, STYLES_DIR, TEMPLATES_DIR, ODL_OUTPUT_DIR, EXTRACT_CACHE_DIR, DOC_TREE_DIR]:

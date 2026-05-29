@@ -614,6 +614,7 @@ async def reindex_all():
     from backend.services.extract_cache import load_cached, save_cache
     from backend.services.metadata import _detect_language
     from backend.services.pdf_extractor import pymupdf_extract_structured
+    from backend.services.structured_extractor import extract_structured
 
     conn = get_connection()
     rows = conn.execute(
@@ -639,7 +640,8 @@ async def reindex_all():
                 if is_scanned_pdf(file_path):
                     elements = ocr_extract_structured(file_path)
                 else:
-                    elements = pymupdf_extract_structured(file_path)
+                    quick_elements = pymupdf_extract_structured(file_path)
+                    elements = extract_structured(file_path, quick_elements=quick_elements)
                 if elements:
                     save_cache(file_hash, elements)
             except Exception as e:
