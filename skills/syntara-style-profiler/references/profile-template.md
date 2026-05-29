@@ -59,6 +59,10 @@ Use this layout for `profile_markdown`.
 
 - ...
 
+## 12. Revision Preferences From User Edits
+
+- ...
+
 ## Appendix: Source Notes
 
 - <filename>: <short role in style extraction>
@@ -71,3 +75,4 @@ Rules:
 - Use short examples only when they clarify a rule.
 - State uncertainty when the corpus is small or mixed.
 - Do not make the user sound like a caricature. Capture range, not only the loudest traits.
+- When learning from an original/revised draft pair, put durable editing preferences in section 12 and keep short before/after examples only when they clarify a reusable rule.

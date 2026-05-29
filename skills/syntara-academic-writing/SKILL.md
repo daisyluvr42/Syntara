@@ -1,9 +1,9 @@
 ---
 name: syntara-academic-writing
-description: Use this skill when writing Chinese professional or academic book chapters with Syntara as the evidence library. Trigger for tasks involving WorkBuddy, Syntara MCP, RAG over literature/corpus, extracting the user's professional-book writing style, drafting chapters from a topic/title/outline, or revising chapter prose with citations and evidence discipline.
+description: Use this skill when writing Chinese academic books, scholarly book chapters, professional books, or long-form academic/professional prose from PDFs, provided source documents, Syntara project libraries, PubMed records, and other available academic sources. Trigger for tasks involving WorkBuddy, Syntara MCP, RAG over literature/corpus, extracting the user's academic-book writing style, drafting chapters from a topic/title/outline, or revising book prose with citations and evidence discipline.
 ---
 
-# Syntara Academic Writing
+# Syntara Academic Book Writing
 
 ## Core Boundary
 
@@ -12,7 +12,7 @@ Use the WorkBuddy skill as the writing director. Use Syntara MCP only as the evi
 - If the task starts from ima, Tencent Docs, WorkBuddy `资料库`, or a mixed knowledge-base corpus, use `syntara-knowledge-writing` first for the source-scope, source-package, style-reference, and evidence-discipline pass, then continue here for professional-book chapter drafting.
 - Skill owns: chapter planning, prose drafting, revision, evidence checks, and applying a resolved style profile.
 - `syntara-style-profiler` owns: extracting and saving reusable professional-book style profiles from prior chapters or user-owned style corpus.
-- Syntara MCP owns: literature search, corpus search, RAG answers, source context, citation metadata, and reusable style profile extraction/storage.
+- Syntara MCP owns: literature search, corpus search, RAG answers, source context, citation metadata, reusable style profile extraction/storage, local PDF/PDF-folder import, PubMed search/import, and metadata enrichment from DOI/CrossRef when available.
 - Do not ask Syntara MCP to write the whole chapter unless the user explicitly requests that. Keep final drafting in the WorkBuddy conversation so style and structure remain consistent.
 - Do not produce a full evidence-backed chapter until Syntara evidence has been searched and checked. If Syntara retrieval is unavailable or insufficient, return an outline, a partial draft, or a `待补证据` list instead of filling gaps with general knowledge.
 
@@ -40,7 +40,7 @@ Before drafting, identify the available inputs:
 - Style profile or user-provided style corpus: Syntara default style profile, prior book chapters, prior sections, selected paragraphs, or WorkBuddy `资料库` / Tencent Docs material already attached in the task.
 - Evidence scope: literature only, user corpus only, or both.
 - Cloud source scope: whether WorkBuddy `资料库` should be used for living outlines, notes, draft material, or style examples.
-- Literature import source: existing Syntara library, local PDF files/folders, PubMed PMIDs, or WorkBuddy `资料库` / Tencent Docs content.
+- Literature import source: existing Syntara library, local PDF files/folders, user-provided source documents, PubMed PMIDs/search results, DOI/CrossRef metadata found during PDF import, or WorkBuddy `资料库` / Tencent Docs content.
 - Citation style or output format if specified.
 
 If one of topic, title, or style corpus is missing, ask a concise follow-up before producing a full chapter. For a quick exploratory draft, proceed with a clearly labeled provisional outline.
@@ -57,7 +57,7 @@ If one of topic, title, or style corpus is missing, ask a concise follow-up befo
 
 5. Use WorkBuddy `资料库` / Tencent Docs material as cloud corpus when available. Treat it as user-owned style, outline, notes, and draft context; do not treat it as peer-reviewed literature unless the document itself contains traceable citations. For details, read `references/tencent-docs-corpus.md`.
 
-6. If the user wants to add materials to Syntara, classify them first. Import local PDFs or PubMed PMIDs into the Syntara literature library. Import WorkBuddy `资料库` / Tencent Docs notes, drafts, and style samples into Syntara corpus with `syntara_import_corpus_text`. Pass `project` so the material lands in the right project area. See `references/syntara-mcp-tools.md` and `references/tencent-docs-corpus.md`.
+6. If the user wants to add materials to Syntara, classify them first. Import local PDFs, PDF folders, PubMed PMIDs/search results, and other formal academic source documents into the Syntara literature library when the tool supports them. Import WorkBuddy `资料库` / Tencent Docs notes, drafts, and style samples into Syntara corpus with `syntara_import_corpus_text`. Pass `project` so the material lands in the right project area. See `references/syntara-mcp-tools.md` and `references/tencent-docs-corpus.md`.
 
 7. Create an evidence ledger before drafting. For each section, keep the claim, supporting source keys, useful quotations or paraphrases, and unresolved gaps.
 
@@ -86,7 +86,7 @@ Use the smallest sufficient tool call:
 - Need synthesized answer to a narrow question: use RAG.
 - Need source inventory: list literature or corpus.
 - Need project inventory: list projects or inspect the chosen project summary.
-- Need to add formal literature: import local PDFs or PubMed PMIDs into Syntara literature.
+- Need to add formal literature: import local PDFs/PDF folders, PubMed PMIDs/search results, or other available academic source documents into Syntara literature.
 - Need to add user notes/style/prose: import text into Syntara corpus.
 - Need formatted bibliography: use citation/export tools if available.
 

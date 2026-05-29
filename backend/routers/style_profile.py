@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from backend.models.style_profile import StyleProfileBuildRequest, StyleProfileSaveRequest
+from backend.models.style_profile import StyleProfileBuildRequest, StyleProfileRevisionRequest, StyleProfileSaveRequest
 from backend.services.style_profile import (
     build_style_profile,
     get_style_profile,
     list_style_profiles,
     save_style_profile,
     set_default_style_profile,
+    update_style_profile_from_revision,
 )
 
 router = APIRouter(prefix="/api/style-profiles", tags=["style-profiles"])
@@ -45,6 +46,16 @@ async def build_profile(req: StyleProfileBuildRequest):
         raise HTTPException(400, str(exc))
     except Exception as exc:
         raise HTTPException(502, f"Style extraction error: {str(exc)}")
+
+
+@router.post("/revision")
+async def update_profile_from_revision(req: StyleProfileRevisionRequest):
+    try:
+        return await update_style_profile_from_revision(**req.model_dump())
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except Exception as exc:
+        raise HTTPException(502, f"Revision style extraction error: {str(exc)}")
 
 
 @router.post("")

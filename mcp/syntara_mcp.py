@@ -189,6 +189,25 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "syntara_update_style_profile_from_revision",
+        "description": "Update a reusable Syntara style profile by comparing an AI/generated draft with the user's revised version and merging learned revision preferences into the profile.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "original_text": {"type": "string", "description": "The draft before the user edited it."},
+                "revised_text": {"type": "string", "description": "The user's edited/final version."},
+                "base_profile_id": {"type": "string", "description": "Optional existing Syntara style profile id to update."},
+                "name": {"type": "string", "description": "Optional profile name. Defaults to the existing profile name."},
+                "project": {"type": "string", "description": "Project slug.", "default": "default"},
+                "style_type": {"type": "string", "description": "Optional writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt."},
+                "source_title": {"type": "string", "description": "Optional title for this revision pair."},
+                "provider_id": {"type": "string", "description": "Optional Syntara AI provider id."},
+                "set_default": {"type": "boolean", "default": True},
+            },
+            "required": ["original_text", "revised_text"],
+        },
+    },
+    {
         "name": "syntara_list_style_profiles",
         "description": "List reusable Syntara writing style profiles, optionally scoped to one project.",
         "inputSchema": {
@@ -456,6 +475,18 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
             if args.get(key):
                 payload[key] = args[key]
         return await http_request("POST", "/api/style-profiles/build", json=payload)
+
+    if name == "syntara_update_style_profile_from_revision":
+        payload = {
+            "original_text": args["original_text"],
+            "revised_text": args["revised_text"],
+            "project": project_slug(args.get("project", "default")),
+            "set_default": args.get("set_default", True),
+        }
+        for key in ("base_profile_id", "name", "style_type", "source_title", "provider_id"):
+            if args.get(key):
+                payload[key] = args[key]
+        return await http_request("POST", "/api/style-profiles/revision", json=payload)
 
     if name == "syntara_list_style_profiles":
         params = {}

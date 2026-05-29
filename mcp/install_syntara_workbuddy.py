@@ -22,7 +22,7 @@ SKILLS_DIR = Path.home() / ".workbuddy" / "skills"
 SKILLS = {
     "syntara-style-profiler": "Syntara 风格档案",
     "syntara-knowledge-writing": "Syntara 资料写作",
-    "syntara-academic-writing": "Syntara 专业章节",
+    "syntara-academic-writing": "Syntara 学术书籍写作",
     "syntara-literature-review": "Syntara 文献综述",
 }
 

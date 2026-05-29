@@ -5,6 +5,8 @@ description: Use this skill for general source-based writing and style-corpus re
 
 # Syntara Knowledge Writing
 
+This is Syntara's **general source-based writing** Skill. In WorkBuddy it is displayed as `Syntara 资料写作`.
+
 ## Role
 
 Use this Skill as the upstream writing workflow for knowledge-base materials. It does not own one specific genre. It owns the process of locating usable sources, turning them into a source package, shaping the writing task, drafting, and checking evidence/style before handoff.
@@ -14,7 +16,7 @@ This Skill is the default Syntara entrypoint for any writing task that combines 
 Use specialized Syntara Skills after this one when needed:
 
 - `syntara-style-profiler`: extracting, updating, and saving reusable style profiles from old writings or style corpus.
-- `syntara-academic-writing`: professional book chapters or academic/professional prose.
+- `syntara-academic-writing`: academic book chapters, professional books, and long-form scholarly writing from PDFs, provided source documents, PubMed, and other available academic sources.
 - `syntara-literature-review`: literature reviews, related work, research-gap syntheses.
 - Future PPT/course/social-post Skills: final format conversion after the source-backed draft is stable.
 

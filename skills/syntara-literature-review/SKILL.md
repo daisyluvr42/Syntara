@@ -1,6 +1,6 @@
 ---
 name: syntara-literature-review
-description: Use this skill when writing Chinese or bilingual literature reviews, narrative reviews, scoping-review style drafts, related-work sections, research-gap summaries, or evidence syntheses with Syntara MCP project-scoped RAG and citations.
+description: Use this skill when writing Chinese or bilingual literature reviews, narrative reviews, scoping-review style drafts, related-work sections, research-gap summaries, or evidence syntheses from PDFs, provided source documents, Syntara project libraries, PubMed records, and other available academic sources with Syntara MCP project-scoped RAG and citations.
 ---
 
 # Syntara Literature Review
@@ -11,7 +11,7 @@ Use WorkBuddy as the writing surface, this Skill as the review-writing director,
 
 - If the task starts from ima, Tencent Docs, WorkBuddy `资料库`, or a mixed knowledge-base corpus, use `syntara-knowledge-writing` first for source availability, scope, source-package, and evidence-discipline checks, then continue here for review synthesis.
 - Skill owns: review question framing, inclusion logic, theme synthesis, controversy mapping, research-gap analysis, prose drafting, citation checks.
-- Syntara MCP owns: project areas, literature search, RAG, source context, imports, citation metadata, reusable style profiles, BibTeX export.
+- Syntara MCP owns: project areas, literature search, RAG, source context, local PDF/PDF-folder imports, PubMed search/import, citation metadata, reusable style profiles, BibTeX export, and metadata enrichment from DOI/CrossRef when available.
 - `syntara-style-profiler` owns: extracting and saving reusable review-writing style profiles from user-owned review, article, or chapter samples.
 - Do not let RAG write the whole review. Use RAG to answer bounded evidence questions, then synthesize in the WorkBuddy conversation.
 - Do not produce a full literature review until Syntara evidence has been searched and a synthesis matrix has at least some source-backed entries.
@@ -34,7 +34,7 @@ If Syntara returns `search_ready_vector: false`, treat only vector RAG as incomp
 - Topic or review question.
 - Syntara project slug.
 - Target audience and publication/use context.
-- Evidence scope: existing project library, new PubMed search, local PDFs, Tencent Docs notes, or mixed sources.
+- Evidence scope: existing project library, new PubMed search, local PDFs/PDF folders, provided source documents, Tencent Docs notes, or mixed sources.
 - Inclusion boundaries: dates, population/domain, intervention/technology, methods, languages, source types.
 - Output shape: thematic review, chronological review, mechanism-based review, controversy/gap review, or IMRaD-like structure.
 - Citation style and language.

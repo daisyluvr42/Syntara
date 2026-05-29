@@ -51,6 +51,27 @@ Use this shape for `profile_json` when calling `syntara_save_style_profile`.
     "banned_moves": [],
     "final_checklist": []
   },
+  "revision_preferences": [
+    {
+      "summary": "",
+      "learned_at": "",
+      "base_profile_id": "",
+      "do": [],
+      "avoid": [],
+      "sentence_level": [],
+      "structure_level": [],
+      "diction_level": [],
+      "evidence_level": [],
+      "formatting_level": [],
+      "examples": [
+        {
+          "before": "",
+          "after": "",
+          "preference": ""
+        }
+      ]
+    }
+  ],
   "genre_variants": {},
   "confidence": {
     "level": "medium",
@@ -65,4 +86,5 @@ Rules:
 - Put examples and nuance in `profile_markdown`.
 - `source_count` must reflect the actual number of source documents read or analyzed.
 - `updated_from_profile_id` should be the prior Syntara profile id when updating a profile.
+- `revision_preferences` stores durable user editing habits learned from original/revised draft pairs. Keep examples short and merge them into the same profile instead of creating a separate diff profile.
 - Use `confidence.level` as `low`, `medium`, or `high`.

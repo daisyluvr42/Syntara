@@ -121,9 +121,9 @@ python mcp/install_syntara_workbuddy.py
 四个 Skill 的分工：
 
 - `syntara-style-profiler`：专门从旧文、书稿、腾讯文档、ima 或 WorkBuddy 资料库中提炼风格，并保存为 Syntara Markdown + JSON style profile。
-- `syntara-knowledge-writing`：通用资料写作流程，适用于 ima、Syntara、腾讯文档或其他资料库来源。
-- `syntara-academic-writing`：专业书章节、学术章节、带文献支持的长文写作。
-- `syntara-literature-review`：文献综述、related work、研究差距、主题证据综合。
+- `syntara-knowledge-writing`：通用资料写作流程，也就是 general source-based writing，适用于 ima、Syntara、腾讯文档或其他资料库来源。
+- `syntara-academic-writing`：学术书籍写作，适用于基于 PDF、给定来源文档、Syntara 项目库、PubMed 和其他可用学术源的书籍章节或长篇学术/专业写作。
+- `syntara-literature-review`：文献综述、related work、研究差距、主题证据综合，使用同一套 PDF、给定来源文档、Syntara 项目库、PubMed 和其他可用学术源。
 
 ## 6. 导入资料
 
@@ -210,6 +210,7 @@ Syntara 可以把你的旧文章、旧章节或腾讯文档语料提炼成项目
 
 ```text
 syntara_build_style_profile
+syntara_update_style_profile_from_revision
 syntara_save_style_profile
 syntara_list_style_profiles
 syntara_get_style_profile
@@ -224,10 +225,13 @@ syntara_set_default_style_profile
 
 如果 Syntara 后端没有配置 AI provider，WorkBuddy 也可以先提炼一份 Markdown/JSON 风格档案，再调用 `syntara_save_style_profile` 保存为项目默认风格。
 
+如果用户先让 WorkBuddy 生成文章，随后自己做了一版修改，可以把“原始生成稿 + 用户修改稿”回传给 `syntara-style-profiler`。它会调用 `syntara_update_style_profile_from_revision`，从差异中提炼删改偏好、措辞偏好、结构偏好和反 AI 味偏好，并整合进当前项目默认 style profile，而不是另存成一份孤立的 diff 文档。
+
 后续如果要补充新的题材或文体，不需要重新安装。可以继续调用：
 
 ```text
 syntara_build_style_profile
+syntara_update_style_profile_from_revision
 syntara_save_style_profile
 syntara_set_default_style_profile
 ```
@@ -466,8 +470,8 @@ Skill roles:
 
 - `syntara-style-profiler`: extracts user writing style from prior writing, book chapters, Tencent Docs, ima, or WorkBuddy knowledge-base material, then saves a Markdown + JSON Syntara style profile.
 - `syntara-knowledge-writing`: general source-based writing from ima, Syntara, Tencent Docs, or other knowledge-base materials.
-- `syntara-academic-writing`: professional book chapters, academic chapters, and long-form writing with literature support.
-- `syntara-literature-review`: literature reviews, related work, research gaps, and thematic evidence synthesis.
+- `syntara-academic-writing`: academic book writing for chapters or long-form scholarly/professional prose from PDFs, provided source documents, Syntara project libraries, PubMed, and other available academic sources.
+- `syntara-literature-review`: literature reviews, related work, research gaps, and thematic evidence synthesis using the same PDF, provided-document, Syntara project, PubMed, and available academic-source base.
 
 ## 6. Import Materials
 
@@ -554,6 +558,7 @@ Common MCP tools:
 
 ```text
 syntara_build_style_profile
+syntara_update_style_profile_from_revision
 syntara_save_style_profile
 syntara_list_style_profiles
 syntara_get_style_profile
@@ -568,10 +573,13 @@ Recommended flow:
 
 If the Syntara backend has no AI provider configured, WorkBuddy can extract a compact Markdown/JSON profile itself and save it with `syntara_save_style_profile`.
 
+If WorkBuddy generates a draft and the user later edits it, send the original generated draft plus the user-edited version back to `syntara-style-profiler`. It calls `syntara_update_style_profile_from_revision`, learns deletion, diction, structure, and anti-AI preferences from the diff, then merges those preferences into the current project default style profile instead of saving a separate diff note.
+
 Later, you can add new topic- or genre-specific style samples without reinstalling. Use:
 
 ```text
 syntara_build_style_profile
+syntara_update_style_profile_from_revision
 syntara_save_style_profile
 syntara_set_default_style_profile
 ```

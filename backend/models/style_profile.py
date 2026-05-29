@@ -30,6 +30,18 @@ class StyleProfileSaveRequest(BaseModel):
     set_default: bool = True
 
 
+class StyleProfileRevisionRequest(BaseModel):
+    original_text: str
+    revised_text: str
+    base_profile_id: str | None = None
+    name: str | None = None
+    project: str = "default"
+    style_type: str | None = None
+    source_title: str | None = None
+    provider_id: str | None = None
+    set_default: bool = True
+
+
 class StyleProfileSummary(BaseModel):
     id: str
     name: str

@@ -18,6 +18,8 @@ Use these tools with a consistent `project` slug whenever possible.
 - `syntara_search_pubmed`: find candidate PubMed records.
 - `syntara_import_pubmed`: import selected PMIDs into the chosen project.
 - `syntara_import_literature_pdfs`: import local full-text PDFs into the chosen project.
+- PDF import may enrich metadata from DOI/CrossRef/PubMed when identifiers are detected.
+- Provided academic source documents should be imported as literature when they are formal sources; notes, outlines, and drafts should remain corpus.
 - `syntara_list_literature`: inspect project sources and citation metadata.
 - `syntara_get_style_profile`: load the default or named writing style profile for the review project.
 - `syntara_list_style_profiles`: inspect reusable writing styles available for the project.

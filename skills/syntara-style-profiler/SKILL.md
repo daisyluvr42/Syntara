@@ -14,6 +14,7 @@ Own:
 - locating user-owned style corpus;
 - grouping corpus by writing type;
 - extracting a structured style profile;
+- learning durable revision preferences from generated drafts and user-edited versions;
 - saving a reusable Markdown + JSON profile with Syntara MCP;
 - setting the correct project default when appropriate.
 
@@ -24,6 +25,8 @@ Do not write the requested article, chapter, review, or deck. After saving the p
 When the user names a corpus folder, old drafts, prior articles, Tencent Docs/ima/WorkBuddy materials, or says to learn/extract/update their style, run this Skill before writing.
 
 If a writing task includes both source materials and a new style corpus, perform this style-profile workflow first unless the user explicitly says not to save or update style.
+
+When the user provides an original/generated draft plus their revised/final version, treat it as a revision-learning task. Extract the user's editing preferences and merge them into the existing Syntara style profile instead of creating a separate standalone diff note.
 
 ## Required Outputs
 
@@ -90,12 +93,39 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
    - Summarize the main changes and the source corpus used.
    - If multiple style profiles should be created but only one was saved, list the remaining candidates.
 
+## Revision Diff Workflow
+
+Use this branch when the user says they edited the generated article/chapter/deck script, or sends an "original vs revised" pair.
+
+1. Resolve the target style profile:
+   - Use the user's `base_profile_id` if provided.
+   - Otherwise call `syntara_get_style_profile` with the current `project` and `default: true`.
+   - If no default profile exists, still run the revision update so Syntara can create a first profile from the user's edits.
+
+2. Compare only writing choices:
+   - Learn what the user removed, compressed, expanded, reordered, renamed, softened, sharpened, or made more concrete.
+   - Separate factual corrections from style rules. A corrected fact belongs to evidence discipline, not voice imitation.
+   - Prefer durable preferences over one-off edits.
+
+3. Call `syntara_update_style_profile_from_revision` with:
+   - `original_text`: the AI/generated draft before user edits.
+   - `revised_text`: the user's edited/final version.
+   - `base_profile_id` when available.
+   - `project`, `style_type`, `source_title`, and `set_default: true` unless the user asks not to update defaults.
+
+4. Confirm the merged result:
+   - Report the new profile id.
+   - State that revision preferences were integrated into the profile Markdown and JSON.
+   - Mention the highest-signal learned preferences, especially banned AI-like moves and preferred revision habits.
+   - Do not proceed to rewrite another draft unless the user asks.
+
 ## Safety Rules
 
 - Never fabricate style traits that are not supported by the corpus.
 - Do not overfit one unusual article unless the user selected it as the style target.
 - Do not turn factual sources into user voice.
 - Do not overwrite the old profile in place unless Syntara MCP explicitly supports update semantics. Saving a new version and making it default is acceptable.
+- For revision diffs, do not save a separate "diff profile" when a base style profile exists. Merge the learned preferences into the next version of the same profile and make it the project default when appropriate.
 - If the user asks only to inspect style without saving, provide the profile draft but do not call save.
 
 ## References

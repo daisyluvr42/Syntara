@@ -205,7 +205,7 @@ Use for: adding article metadata and abstracts as formal literature. These recor
 
 ### `syntara_import_literature_pdfs`
 
-Purpose: import local PDF files into the Syntara literature library and start background extraction/indexing.
+Purpose: import local PDF files or folders into the Syntara literature library and start background extraction/indexing.
 
 Input:
 
@@ -221,7 +221,7 @@ Input:
 
 Expected output: imported PDF records with Syntara ids and cite keys, plus any failed files.
 
-Use for: adding formal literature with full-text extraction. Prefer this for PDFs that should become citable RAG evidence.
+Use for: adding formal literature with full-text extraction. Prefer this for PDFs that should become citable RAG evidence. During import, Syntara may enrich metadata from DOI/CrossRef/PubMed when identifiers are detected.
 
 ### `syntara_format_citations`
 
@@ -236,6 +236,6 @@ Use for: final cleanup only after the draft's evidence markers are stable.
 3. Open context for the most important hits.
 4. Ask RAG only narrow questions. If RAG/vector status is not ready, skip RAG and continue with grouped full-text search plus chunk context.
 5. If a cloud document should become durable local corpus, import it with `syntara_import_corpus_text`, then search it with `scope: "corpus"` or `scope: "all"`.
-6. If the user wants to add formal literature, use PDF import for local files or PubMed search/import for PMIDs.
+6. If the user wants to add formal literature, use PDF/PDF-folder import for local files, PubMed search/import for PMIDs or queries, and any other available academic-source connector by the same literature-vs-corpus rule.
 7. Keep an evidence ledger outside the prose.
 8. Draft from the ledger, not directly from raw RAG output.
