@@ -10,7 +10,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.config import HOST, PORT
 from backend.db.sqlite import get_connection, init_db
-from backend.routers import ai, corpus, doc_tree, document, export, extract_cache, literature, project, pubmed, search
+from backend.routers import ai, corpus, doc_tree, document, export, extract_cache, literature, project, pubmed, search, style_profile
 
 
 @asynccontextmanager
@@ -53,6 +53,7 @@ app.include_router(export.router)
 app.include_router(extract_cache.router)
 app.include_router(doc_tree.router)
 app.include_router(project.router)
+app.include_router(style_profile.router)
 
 
 @app.get("/api/health")

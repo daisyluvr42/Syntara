@@ -83,28 +83,45 @@ python mcp/install_syntara_workbuddy.py
 
 Syntara MCP 支持在工具调用时自动启动后端。如果你已经手动运行 `./start.sh`，MCP 会复用本地后端。
 
+如果你已经有一份整理好的风格文档，可以在安装 MCP 时顺便导入：
+
+```bash
+python mcp/install_syntara_workbuddy.py \
+  --style-file /path/to/my-style.md \
+  --style-name "公众号长文风格" \
+  --style-project default \
+  --style-type wechat-longform
+```
+
+也可以用交互式方式：
+
+```bash
+python mcp/install_syntara_workbuddy.py --setup-style
+```
+
 ## 5. 安装 WorkBuddy Skill
 
-仓库内置两个 Skill：
+仓库内置四个 Skill：
 
 ```text
+skills/syntara-style-profiler
+skills/syntara-knowledge-writing
 skills/syntara-academic-writing
 skills/syntara-literature-review
 ```
 
-把它们复制到 WorkBuddy 的本地 Skill 目录：
+默认安装命令已经会把这四个 Skill 安装到 WorkBuddy，并写入用户导入元数据：
 
 ```bash
-mkdir -p ~/.workbuddy/skills
-rm -rf ~/.workbuddy/skills/syntara-academic-writing ~/.workbuddy/skills/syntara-literature-review
-cp -R skills/syntara-academic-writing ~/.workbuddy/skills/
-cp -R skills/syntara-literature-review ~/.workbuddy/skills/
+python mcp/install_syntara_workbuddy.py
 ```
 
 然后在 WorkBuddy 中刷新 Skill 列表。
 
-两个 Skill 的分工：
+四个 Skill 的分工：
 
+- `syntara-style-profiler`：专门从旧文、书稿、腾讯文档、ima 或 WorkBuddy 资料库中提炼风格，并保存为 Syntara Markdown + JSON style profile。
+- `syntara-knowledge-writing`：通用资料写作流程，适用于 ima、Syntara、腾讯文档或其他资料库来源。
 - `syntara-academic-writing`：专业书章节、学术章节、带文献支持的长文写作。
 - `syntara-literature-review`：文献综述、related work、研究差距、主题证据综合。
 
@@ -185,18 +202,51 @@ syntara_import_corpus_text
 
 这些内容默认属于 Corpus，不应当当作正式文献引用。若笔记中提到论文，应通过 PDF 或 PubMed 把原始论文加入 Literature。
 
-## 7. 在 WorkBuddy 中写作
+## 7. 建立和复用风格档案
+
+Syntara 可以把你的旧文章、旧章节或腾讯文档语料提炼成项目级 style profile。建议用 `syntara-style-profiler` 专门完成这一步，它会按固定维度提炼风格，并保存为 Markdown + JSON。正式写作时，其他 Skill 会优先查找当前 `project` 的默认风格档案；如果存在，会自动应用。没有默认档案时，Skill 会使用默认去 AI 化风格，并轻提示你可以提供风格样本。
+
+常用 MCP 工具：
+
+```text
+syntara_build_style_profile
+syntara_save_style_profile
+syntara_list_style_profiles
+syntara_get_style_profile
+syntara_set_default_style_profile
+```
+
+推荐做法：
+
+1. 导入或指向你的代表性旧文、章节、腾讯文档或 ima / WorkBuddy 资料库内容，标签可用 `style-corpus`。
+2. 使用 `syntara-style-profiler` 为对应 `project` 和 `style_type` 生成规范 Markdown + JSON 风格档案。
+3. 设置为默认后，后续正式写作会自动读取该风格档案。
+
+如果 Syntara 后端没有配置 AI provider，WorkBuddy 也可以先提炼一份 Markdown/JSON 风格档案，再调用 `syntara_save_style_profile` 保存为项目默认风格。
+
+后续如果要补充新的题材或文体，不需要重新安装。可以继续调用：
+
+```text
+syntara_build_style_profile
+syntara_save_style_profile
+syntara_set_default_style_profile
+```
+
+关键是为不同文体设置不同 `style_type`，例如 `wechat-longform`、`professional-book`、`literature-review`、`tutorial` 或 `ppt`。Syntara 会把它们保存为不同风格档案，Skill 写作时按任务类型调用对应档案。
+
+## 8. 在 WorkBuddy 中写作
 
 推荐流程：
 
 1. 选择一个 Syntara Skill，例如 `syntara-literature-review`。
 2. 告诉 WorkBuddy 主题、目标文体、读者、输出长度和 `project`。
 3. 如果已有文献库，让 WorkBuddy 先调用 `syntara_project_summary` 看项目内容。
-4. 让 WorkBuddy 用 `syntara_search_literature_grouped` 或 `syntara_search` 找证据。
-5. 对关键证据调用 `syntara_get_chunk_context` 检查上下文。
-6. 对窄问题调用 `syntara_rag_answer`，不要让 RAG 直接写整篇文章。
-7. 让 Skill 负责组织结构、提取风格、写正文、检查 unsupported claims。
-8. 完成后用 `syntara_format_citations` 或 `syntara_export_bibtex` 处理引用。
+4. 正式写作时，Skill 会先查找当前项目默认 style profile。
+5. 让 WorkBuddy 用 `syntara_search_literature_grouped` 或 `syntara_search` 找证据。
+6. 对关键证据调用 `syntara_get_chunk_context` 检查上下文。
+7. 对窄问题调用 `syntara_rag_answer`，不要让 RAG 直接写整篇文章。
+8. 让 Skill 负责组织结构、应用风格、写正文、检查 unsupported claims。
+9. 完成后用 `syntara_format_citations` 或 `syntara_export_bibtex` 处理引用。
 
 可以这样对 WorkBuddy 说：
 
@@ -214,7 +264,7 @@ syntara_import_corpus_text
 先用 Syntara 检索证据，不要直接编造引用。
 ```
 
-## 8. AI 与 Embedding 配置
+## 9. AI 与 Embedding 配置
 
 Syntara 支持本地和云端 AI provider。常用方式：
 
@@ -236,7 +286,7 @@ EMBEDDING_API_KEY=
 EMBEDDING_MODE=python ./start.sh
 ```
 
-## 9. 本地数据位置
+## 10. 本地数据位置
 
 本地数据默认写入：
 
@@ -252,6 +302,7 @@ data/
 - `data/chromadb/`：向量库
 - `data/extract_cache/`：PDF 解析缓存
 - `data/doc_trees/`：文档树缓存
+- `styles/`：可读的 Markdown/JSON 风格档案副本和引用样式文件
 
 `data/` 不会提交到 Git。备份或迁移文献库时，备份整个 `data/` 目录即可。
 
@@ -376,28 +427,45 @@ Then open WorkBuddy:
 
 Syntara MCP can auto-start the backend on tool calls. If `./start.sh` is already running, MCP reuses that local backend.
 
+If you already have a maintained style document, import it during MCP setup:
+
+```bash
+python mcp/install_syntara_workbuddy.py \
+  --style-file /path/to/my-style.md \
+  --style-name "WeChat Longform Style" \
+  --style-project default \
+  --style-type wechat-longform
+```
+
+Or use the interactive setup:
+
+```bash
+python mcp/install_syntara_workbuddy.py --setup-style
+```
+
 ## 5. Install WorkBuddy Skills
 
-The repository includes two skills:
+The repository includes four skills:
 
 ```text
+skills/syntara-style-profiler
+skills/syntara-knowledge-writing
 skills/syntara-academic-writing
 skills/syntara-literature-review
 ```
 
-Copy them into WorkBuddy's local skills directory:
+The default installer copies these skills into WorkBuddy and writes user-import metadata:
 
 ```bash
-mkdir -p ~/.workbuddy/skills
-rm -rf ~/.workbuddy/skills/syntara-academic-writing ~/.workbuddy/skills/syntara-literature-review
-cp -R skills/syntara-academic-writing ~/.workbuddy/skills/
-cp -R skills/syntara-literature-review ~/.workbuddy/skills/
+python mcp/install_syntara_workbuddy.py
 ```
 
 Then refresh the WorkBuddy skill list.
 
 Skill roles:
 
+- `syntara-style-profiler`: extracts user writing style from prior writing, book chapters, Tencent Docs, ima, or WorkBuddy knowledge-base material, then saves a Markdown + JSON Syntara style profile.
+- `syntara-knowledge-writing`: general source-based writing from ima, Syntara, Tencent Docs, or other knowledge-base materials.
 - `syntara-academic-writing`: professional book chapters, academic chapters, and long-form writing with literature support.
 - `syntara-literature-review`: literature reviews, related work, research gaps, and thematic evidence synthesis.
 
@@ -478,18 +546,51 @@ Use this for:
 
 These materials belong to Corpus by default and should not be treated as formal literature citations. If a note mentions a paper, add the original paper through PDF or PubMed import.
 
-## 7. Writing With WorkBuddy
+## 7. Build And Reuse Style Profiles
+
+Syntara can turn prior articles, book chapters, or Tencent Docs corpora into project-scoped style profiles. Use `syntara-style-profiler` for this step: it extracts style along fixed dimensions and saves both Markdown and JSON. For formal writing, other skills first look for the default style profile for the current `project`; if one exists, it is applied automatically. If none exists, the skill uses the default de-AI pass and lightly suggests providing style samples.
+
+Common MCP tools:
+
+```text
+syntara_build_style_profile
+syntara_save_style_profile
+syntara_list_style_profiles
+syntara_get_style_profile
+syntara_set_default_style_profile
+```
+
+Recommended flow:
+
+1. Import or point WorkBuddy to representative prior writing, optionally tagged `style-corpus`.
+2. Use `syntara-style-profiler` to extract a normalized Markdown + JSON profile for the target `project` and `style_type`.
+3. Set it as default so future formal writing uses it automatically.
+
+If the Syntara backend has no AI provider configured, WorkBuddy can extract a compact Markdown/JSON profile itself and save it with `syntara_save_style_profile`.
+
+Later, you can add new topic- or genre-specific style samples without reinstalling. Use:
+
+```text
+syntara_build_style_profile
+syntara_save_style_profile
+syntara_set_default_style_profile
+```
+
+Set a different `style_type` for each writing form, such as `wechat-longform`, `professional-book`, `literature-review`, `tutorial`, or `ppt`. Syntara stores them as separate style profiles, and skills choose the matching profile for the current writing task.
+
+## 8. Writing With WorkBuddy
 
 Recommended workflow:
 
 1. Choose a Syntara skill, such as `syntara-literature-review`.
 2. Tell WorkBuddy the topic, genre, audience, target length, and `project`.
 3. If a library already exists, ask WorkBuddy to call `syntara_project_summary`.
-4. Retrieve evidence with `syntara_search_literature_grouped` or `syntara_search`.
-5. Check key passages with `syntara_get_chunk_context`.
-6. Use `syntara_rag_answer` only for narrow evidence questions.
-7. Let the skill handle structure, style extraction, drafting, and unsupported-claim checks.
-8. Use `syntara_format_citations` or `syntara_export_bibtex` for final citation work.
+4. For formal writing, the skill checks the project default style profile.
+5. Retrieve evidence with `syntara_search_literature_grouped` or `syntara_search`.
+6. Check key passages with `syntara_get_chunk_context`.
+7. Use `syntara_rag_answer` only for narrow evidence questions.
+8. Let the skill handle structure, style application, drafting, and unsupported-claim checks.
+9. Use `syntara_format_citations` or `syntara_export_bibtex` for final citation work.
 
 Example prompt:
 
@@ -507,7 +608,7 @@ Read my attached previous chapter as style corpus, then outline a professional b
 Use Syntara for evidence retrieval first. Do not invent citations.
 ```
 
-## 8. AI and Embedding Configuration
+## 9. AI and Embedding Configuration
 
 Syntara supports local and cloud AI providers. Common options:
 
@@ -529,7 +630,7 @@ If you do not have a local embedding service, use the built-in lightweight Pytho
 EMBEDDING_MODE=python ./start.sh
 ```
 
-## 9. Local Data
+## 10. Local Data
 
 Local data is written to:
 
@@ -545,10 +646,11 @@ It includes:
 - `data/chromadb/`: vector store
 - `data/extract_cache/`: PDF extraction cache
 - `data/doc_trees/`: document tree cache
+- `styles/`: readable Markdown/JSON style profile copies and citation style files
 
 `data/` is excluded from Git. To back up or move your library, back up the entire `data/` directory.
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 ### WorkBuddy Does Not Show `syntara`
 

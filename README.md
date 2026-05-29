@@ -8,8 +8,9 @@ Syntara 是一个面向专业写作的本地证据引擎：它把论文、笔记
 
 - **项目级知识库**：用 `project` 区分不同主题、书稿、综述或研究方向。
 - **本地 RAG**：在本地保存文献、语料、索引和向量库，避免把私有资料直接交给云端工作流。
+- **可复用风格档案**：用专门的风格 Skill 从你的旧文章、书稿章节或腾讯文档语料中提炼 Markdown + JSON style profile，并在同一项目的后续写作中自动复用。
 - **WorkBuddy MCP**：通过 `syntara_*` 工具让 WorkBuddy 检索文献、导入资料、生成 RAG 答案、格式化引用和导出 BibTeX。
-- **模块化 Skill**：当前包含专业书章节写作和文献综述写作，后续可以继续添加 PPT、报告、标书等文体 Skill。
+- **模块化 Skill**：当前包含风格档案提取、通用资料写作、专业书章节写作和文献综述写作，后续可以继续添加 PPT、报告、标书等文体 Skill。
 - **可选网页界面**：用于本地管理文献、语料、搜索、引用和 AI 配置。
 
 ## 快速开始
@@ -26,7 +27,7 @@ cd Syntara
 - Frontend: `http://127.0.0.1:5173`
 - API docs: `http://127.0.0.1:8888/docs`
 
-安装 WorkBuddy MCP：
+安装 WorkBuddy MCP 和内置 Skill：
 
 ```bash
 python mcp/install_syntara_workbuddy.py
@@ -59,8 +60,9 @@ Syntara is a local evidence engine for professional writing. It connects papers,
 
 - **Project-scoped libraries**: separate topics, books, reviews, and research areas with `project` slugs.
 - **Local RAG**: keep source files, corpora, indexes, and vector stores on your machine.
+- **Reusable style profiles**: use a dedicated style skill to extract Markdown + JSON style profiles from prior articles, book chapters, or Tencent Docs corpora, then reuse them automatically in future writing for the same project.
 - **WorkBuddy MCP**: expose `syntara_*` tools for retrieval, imports, RAG answers, citation formatting, and BibTeX export.
-- **Modular skills**: includes academic chapter writing and literature review skills, with room for future PPT, report, and proposal-writing skills.
+- **Modular skills**: includes style-profile extraction, general knowledge-base writing, academic chapter writing, and literature review skills, with room for future PPT, report, and proposal-writing skills.
 - **Optional web UI**: manage literature, corpora, search, citations, and AI providers locally.
 
 ## Quick Start
@@ -77,7 +79,7 @@ Default URLs:
 - Frontend: `http://127.0.0.1:5173`
 - API docs: `http://127.0.0.1:8888/docs`
 
-Install the WorkBuddy MCP entry:
+Install the WorkBuddy MCP entry and built-in skills:
 
 ```bash
 python mcp/install_syntara_workbuddy.py

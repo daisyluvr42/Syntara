@@ -4,6 +4,14 @@ Use this reference when calling the connected Syntara MCP server from WorkBuddy.
 
 Exact tool names may differ. Match by semantics.
 
+## Readiness Rules
+
+- `search_ready_fts: true` means full-text/keyword retrieval can be used.
+- `search_ready_vector: false` means vector retrieval or RAG may be incomplete. It does not mean Syntara evidence retrieval is unavailable.
+- When vector search is not ready, use `syntara_search`, `syntara_search_literature_grouped`, and `syntara_get_chunk_context` as the evidence path.
+- Do not tell the user that Syntara search is unavailable unless both full-text search and source listing fail.
+- Do not draft evidence-backed prose from general knowledge just because vector search is unavailable.
+
 ## Expected Tools
 
 ### `syntara_list_projects`
@@ -130,6 +138,38 @@ Expected output: Syntara corpus id and title.
 
 Use for: turning cloud documents, user-prepared style corpus, or chapter notes into a reusable local Syntara corpus. Use `dry_run: true` when checking payload size or routing without writing.
 
+### `syntara_build_style_profile`
+
+Purpose: extract a reusable structured writing style profile from user corpus.
+
+Input:
+
+```json
+{
+  "name": "专业书章节风格",
+  "project": "professional-book",
+  "corpus_ids": ["optional corpus id"],
+  "tag": "optional corpus tag",
+  "content": "optional direct style corpus text",
+  "source_title": "optional source title",
+  "set_default": true
+}
+```
+
+Use for: turning prior chapters, Tencent Docs drafts, WorkBuddy knowledge-base text, or other user-owned prose into a reusable Syntara style asset.
+
+### `syntara_save_style_profile`
+
+Purpose: save an already extracted profile as a reusable Syntara asset.
+
+Use for: preserving a profile extracted by WorkBuddy when backend AI extraction is unavailable, or importing a hand-maintained Markdown style document.
+
+### `syntara_list_style_profiles` / `syntara_get_style_profile` / `syntara_set_default_style_profile`
+
+Purpose: discover, load, and bind reusable style profiles.
+
+Use for: resolving writing style before outlining. For formal writing, first call `syntara_get_style_profile` with `default: true` for the chosen project. If none exists, list profiles and use a clear match. If no profile exists, use the default de-AI pass and mention that a reusable profile can be created from style samples.
+
 ### `syntara_search_pubmed`
 
 Purpose: search PubMed through Syntara and return candidate articles with PMIDs.
@@ -194,7 +234,7 @@ Use for: final cleanup only after the draft's evidence markers are stable.
 1. Choose or infer the project area.
 2. Search broadly enough to find candidate sources, passing `project` when available.
 3. Open context for the most important hits.
-4. Ask RAG only narrow questions.
+4. Ask RAG only narrow questions. If RAG/vector status is not ready, skip RAG and continue with grouped full-text search plus chunk context.
 5. If a cloud document should become durable local corpus, import it with `syntara_import_corpus_text`, then search it with `scope: "corpus"` or `scope: "all"`.
 6. If the user wants to add formal literature, use PDF import for local files or PubMed search/import for PMIDs.
 7. Keep an evidence ledger outside the prose.

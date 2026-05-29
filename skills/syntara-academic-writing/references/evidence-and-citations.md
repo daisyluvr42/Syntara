@@ -8,6 +8,8 @@ Use this reference before delivering a draft or revision.
 - Do not invent author-year markers, PMID values, DOI values, or cite keys.
 - Keep `[@citekey]` markers inline unless the user requests another style.
 - If a claim has no supporting source, either soften it or list it under "待补证据".
+- Do not cite the user's manuscript or style corpus as literature unless the user explicitly says it is a citable source.
+- Do not complete a full evidence-backed draft when the evidence ledger is empty. Return a provisional outline or evidence request instead.
 
 ## Evidence Ledger
 
@@ -36,6 +38,8 @@ Before final output, scan for:
 - claims that generalize from one indication to all patients
 
 These usually need direct evidence.
+
+If Syntara vector retrieval is not ready, verify these claims with full-text search and chunk context before drafting them.
 
 ## Style Checks
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Syntara Style Profiler"
+  short_description: "Extract and save reusable writing style profiles."
+  default_prompt: "Use $syntara-style-profiler to extract my corpus writing style and save it as a reusable Syntara profile."

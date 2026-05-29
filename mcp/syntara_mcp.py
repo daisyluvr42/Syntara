@@ -166,6 +166,87 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "syntara_build_style_profile",
+        "description": "Extract a reusable structured writing style profile from given corpus text or imported Syntara corpus entries.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Style profile name, such as 公众号长文风格."},
+                "project": {"type": "string", "description": "Project slug to attach the style profile to.", "default": "default"},
+                "style_type": {"type": "string", "description": "Optional writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt."},
+                "corpus_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional Syntara corpus ids to use as style examples.",
+                },
+                "tag": {"type": "string", "description": "Optional corpus tag to collect style examples from."},
+                "content": {"type": "string", "description": "Optional direct style corpus content from WorkBuddy/ima/Tencent Docs."},
+                "source_title": {"type": "string", "description": "Title for direct style corpus content."},
+                "provider_id": {"type": "string", "description": "Optional Syntara AI provider id."},
+                "set_default": {"type": "boolean", "default": True},
+            },
+            "required": ["name"],
+        },
+    },
+    {
+        "name": "syntara_list_style_profiles",
+        "description": "List reusable Syntara writing style profiles, optionally scoped to one project.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "project": {"type": "string", "description": "Optional project slug."},
+                "style_type": {"type": "string", "description": "Optional writing type filter."},
+            },
+        },
+    },
+    {
+        "name": "syntara_save_style_profile",
+        "description": "Save an already extracted style profile into Syntara and optionally set it as project default.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "name": {"type": "string", "description": "Style profile name."},
+                "project": {"type": "string", "description": "Project slug.", "default": "default"},
+                "style_type": {"type": "string", "description": "Optional writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt."},
+                "profile_json": {"type": "object", "description": "Optional structured profile JSON."},
+                "profile_markdown": {"type": "string", "description": "Human-readable style profile markdown."},
+                "source_corpus_ids": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Optional Syntara corpus ids used to create the profile.",
+                },
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "set_default": {"type": "boolean", "default": True},
+            },
+            "required": ["name", "profile_markdown"],
+        },
+    },
+    {
+        "name": "syntara_get_style_profile",
+        "description": "Get a Syntara style profile by id, by project/name, or the default profile for a project.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "profile_id": {"type": "string"},
+                "project": {"type": "string", "description": "Project slug.", "default": "default"},
+                "name": {"type": "string", "description": "Style profile name."},
+                "default": {"type": "boolean", "default": False},
+            },
+        },
+    },
+    {
+        "name": "syntara_set_default_style_profile",
+        "description": "Set one Syntara style profile as the default for its project.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "profile_id": {"type": "string"},
+                "project": {"type": "string"},
+                "name": {"type": "string"},
+            },
+        },
+    },
+    {
         "name": "syntara_search_pubmed",
         "description": "Search PubMed from Syntara and return candidate PMIDs for literature import.",
         "inputSchema": {
@@ -362,6 +443,62 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
         files = {"file": (filename, content.encode("utf-8"), "text/markdown")}
         data = {"title": title, "description": description, "tags": ",".join(tags)}
         return await http_request("POST", "/api/corpus/upload", data=data, files=files)
+
+    if name == "syntara_build_style_profile":
+        payload = {
+            "name": args["name"],
+            "project": project_slug(args.get("project", "default")),
+            "style_type": args.get("style_type"),
+            "corpus_ids": args.get("corpus_ids") or [],
+            "set_default": args.get("set_default", True),
+        }
+        for key in ("tag", "content", "source_title", "provider_id"):
+            if args.get(key):
+                payload[key] = args[key]
+        return await http_request("POST", "/api/style-profiles/build", json=payload)
+
+    if name == "syntara_list_style_profiles":
+        params = {}
+        if args.get("project"):
+            params["project"] = project_slug(args["project"])
+        if args.get("style_type"):
+            params["style_type"] = args["style_type"]
+        return await http_request("GET", "/api/style-profiles", params=params)
+
+    if name == "syntara_save_style_profile":
+        payload = {
+            "name": args["name"],
+            "project": project_slug(args.get("project", "default")),
+            "style_type": args.get("style_type"),
+            "profile_json": args.get("profile_json") or {},
+            "profile_markdown": args["profile_markdown"],
+            "source_corpus_ids": args.get("source_corpus_ids") or [],
+            "tags": args.get("tags") or [],
+            "set_default": args.get("set_default", True),
+        }
+        return await http_request("POST", "/api/style-profiles", json=payload)
+
+    if name == "syntara_get_style_profile":
+        if args.get("profile_id"):
+            return await http_request("GET", f"/api/style-profiles/{args['profile_id']}")
+        project = project_slug(args.get("project", "default"))
+        if args.get("default", False) or not args.get("name"):
+            return await http_request("GET", "/api/style-profiles/default", params={"project": project})
+        profiles = await http_request("GET", "/api/style-profiles", params={"project": project})
+        for item in profiles.get("items", []):
+            if item.get("name") == args["name"]:
+                return await http_request("GET", f"/api/style-profiles/{item['id']}")
+        raise ValueError("Style profile not found")
+
+    if name == "syntara_set_default_style_profile":
+        if args.get("profile_id"):
+            return await http_request("PUT", f"/api/style-profiles/{args['profile_id']}/default")
+        project = project_slug(args.get("project", "default"))
+        profiles = await http_request("GET", "/api/style-profiles", params={"project": project})
+        for item in profiles.get("items", []):
+            if item.get("name") == args.get("name"):
+                return await http_request("PUT", f"/api/style-profiles/{item['id']}/default")
+        raise ValueError("Style profile not found")
 
     if name == "syntara_search_pubmed":
         params = {"query": args["query"], "max_results": args.get("max_results", 20)}

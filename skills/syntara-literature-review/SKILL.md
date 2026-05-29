@@ -9,9 +9,24 @@ description: Use this skill when writing Chinese or bilingual literature reviews
 
 Use WorkBuddy as the writing surface, this Skill as the review-writing director, and Syntara MCP as the project-scoped evidence library.
 
+- If the task starts from ima, Tencent Docs, WorkBuddy `资料库`, or a mixed knowledge-base corpus, use `syntara-knowledge-writing` first for source availability, scope, source-package, and evidence-discipline checks, then continue here for review synthesis.
 - Skill owns: review question framing, inclusion logic, theme synthesis, controversy mapping, research-gap analysis, prose drafting, citation checks.
-- Syntara MCP owns: project areas, literature search, RAG, source context, imports, citation metadata, BibTeX export.
+- Syntara MCP owns: project areas, literature search, RAG, source context, imports, citation metadata, reusable style profiles, BibTeX export.
+- `syntara-style-profiler` owns: extracting and saving reusable review-writing style profiles from user-owned review, article, or chapter samples.
 - Do not let RAG write the whole review. Use RAG to answer bounded evidence questions, then synthesize in the WorkBuddy conversation.
+- Do not produce a full literature review until Syntara evidence has been searched and a synthesis matrix has at least some source-backed entries.
+- If vector retrieval is not ready, continue with full-text/grouped literature search and chunk context. Do not replace missing retrieval with general knowledge.
+
+## Retrieval Gate
+
+Before drafting a full review:
+
+1. Confirm the Syntara project slug.
+2. Run multiple Syntara searches that match the review strands.
+3. Open context for key chunks that support important claims.
+4. Build a synthesis matrix with source ids or cite keys.
+
+If Syntara returns `search_ready_vector: false`, treat only vector RAG as incomplete. Use `syntara_search_literature_grouped`, `syntara_search`, and `syntara_get_chunk_context` for evidence. If those tools do not return enough evidence, output a search report and `待补证据`, not a finished review.
 
 ## Inputs To Collect
 
@@ -30,17 +45,19 @@ If topic, review type, or project slug is missing, ask one concise follow-up bef
 
 1. Select the project. Use `syntara_list_projects` or `syntara_project_summary` when the project is unclear.
 
-2. Frame the review question and boundaries. Convert the topic into inclusion/exclusion criteria, even if informal. For details, read `references/review-workflow.md`.
+2. Resolve style profile for formal review writing. First look for a Syntara profile with `style_type: "literature-review"` in the chosen project. If none exists, check the project default. If none exists, look for user-owned review/article/chapter style samples in the current corpus or connected knowledge base. Use `syntara-style-profiler` to build and save a `literature-review` Markdown + JSON project default profile from an obvious single match, ask the user to choose if there are multiple candidates, or continue with default de-AI if no personal style corpus is available.
 
-3. Build search strands. Use several targeted queries: core concept, synonyms, mechanism, clinical/application setting, methods, controversies, and recent advances.
+3. Frame the review question and boundaries. Convert the topic into inclusion/exclusion criteria, even if informal. For details, read `references/review-workflow.md`.
 
-4. Retrieve evidence with Syntara MCP using the chosen `project`. Prefer `syntara_search_literature_grouped` for source discovery, `syntara_get_chunk_context` for support checks, and `syntara_rag_answer` only for bounded subquestions.
+4. Build search strands. Use several targeted queries: core concept, synonyms, mechanism, clinical/application setting, methods, controversies, and recent advances.
 
-5. Build a synthesis matrix before drafting. Track source, population/domain, method, finding, limitation, and how it affects the review argument. For details, read `references/synthesis-matrix.md`.
+5. Retrieve evidence with Syntara MCP using the chosen `project`. Prefer `syntara_search_literature_grouped` for source discovery, `syntara_get_chunk_context` for support checks, and `syntara_rag_answer` only for bounded subquestions. If vector RAG is unavailable, continue with grouped full-text search and chunk context.
 
-6. Draft by synthesis, not by paper order. Organize around mechanisms, themes, disagreements, evidence strength, and unresolved gaps.
+6. Build a synthesis matrix before drafting. Track source, population/domain, method, finding, limitation, and how it affects the review argument. For details, read `references/synthesis-matrix.md`.
 
-7. Run a final evidence pass. Check that each strong claim has a source, each citation supports the sentence it follows, and uncertainty is stated honestly.
+7. Draft by synthesis, not by paper order. Organize around mechanisms, themes, disagreements, evidence strength, and unresolved gaps.
+
+8. Run a final evidence pass. Check that each strong claim has a source, each citation supports the sentence it follows, and uncertainty is stated honestly.
 
 ## Output Shape
 

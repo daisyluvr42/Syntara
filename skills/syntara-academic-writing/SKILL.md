@@ -9,9 +9,25 @@ description: Use this skill when writing Chinese professional or academic book c
 
 Use the WorkBuddy skill as the writing director. Use Syntara MCP only as the evidence and retrieval layer.
 
-- Skill owns: style extraction, chapter planning, prose drafting, revision, evidence checks.
-- Syntara MCP owns: literature search, corpus search, RAG answers, source context, citation metadata.
+- If the task starts from ima, Tencent Docs, WorkBuddy `资料库`, or a mixed knowledge-base corpus, use `syntara-knowledge-writing` first for the source-scope, source-package, style-reference, and evidence-discipline pass, then continue here for professional-book chapter drafting.
+- Skill owns: chapter planning, prose drafting, revision, evidence checks, and applying a resolved style profile.
+- `syntara-style-profiler` owns: extracting and saving reusable professional-book style profiles from prior chapters or user-owned style corpus.
+- Syntara MCP owns: literature search, corpus search, RAG answers, source context, citation metadata, and reusable style profile extraction/storage.
 - Do not ask Syntara MCP to write the whole chapter unless the user explicitly requests that. Keep final drafting in the WorkBuddy conversation so style and structure remain consistent.
+- Do not produce a full evidence-backed chapter until Syntara evidence has been searched and checked. If Syntara retrieval is unavailable or insufficient, return an outline, a partial draft, or a `待补证据` list instead of filling gaps with general knowledge.
+
+## Retrieval Gate
+
+Before drafting a full chapter:
+
+1. Confirm the Syntara project area.
+2. Run at least one Syntara literature or corpus search for each major claim cluster.
+3. Open context for the most important hits when a claim depends on a specific source.
+4. Keep an evidence ledger with cite keys or source ids.
+
+If `search_ready_vector: false`, do not treat Syntara as unavailable. Continue with keyword/full-text tools such as `syntara_search`, `syntara_search_literature_grouped`, and `syntara_get_chunk_context`. State that vector RAG is not ready only if relevant. Do not skip retrieval and do not draft from clinical common sense alone.
+
+If no Syntara evidence is found for a strong factual, comparative, numerical, causal, or recommendation-like claim, either soften the claim or put it under `待补证据`.
 
 ## Inputs To Collect
 
@@ -21,7 +37,7 @@ Before drafting, identify the available inputs:
 - Syntara project slug, such as `professional-book`, `implant-literature`, or `wechat-agent-tools`.
 - Chapter title and intended section outline.
 - Target reader and level of technical depth.
-- User-provided style corpus: prior book chapters, prior sections, selected paragraphs, or WorkBuddy `资料库` / Tencent Docs material already attached in the task.
+- Style profile or user-provided style corpus: Syntara default style profile, prior book chapters, prior sections, selected paragraphs, or WorkBuddy `资料库` / Tencent Docs material already attached in the task.
 - Evidence scope: literature only, user corpus only, or both.
 - Cloud source scope: whether WorkBuddy `资料库` should be used for living outlines, notes, draft material, or style examples.
 - Literature import source: existing Syntara library, local PDF files/folders, PubMed PMIDs, or WorkBuddy `资料库` / Tencent Docs content.
@@ -31,13 +47,13 @@ If one of topic, title, or style corpus is missing, ask a concise follow-up befo
 
 ## Workflow
 
-1. Build a style brief from the user's supplied professional-book corpus. Capture paragraph rhythm, explanation order, terminology habits, use of examples, claim strength, and how experience-based judgment is separated from literature-backed claims. For details, read `references/style-extraction.md`.
+1. Resolve style before outlining. First check Syntara MCP for the project's default style profile. If the user supplied professional-book corpus and no suitable profile exists, use `syntara-style-profiler` to extract and save a `professional-book` Markdown + JSON profile, then apply it. For details, read `references/style-extraction.md`.
 
 2. Choose the Syntara project area before retrieval. If the user does not name one, infer a slug from the writing task and confirm it briefly before importing durable materials. Use the same `project` value in Syntara MCP calls whenever the tool supports it.
 
 3. Convert the topic and outline into retrieval questions. Use one question per claim cluster, not one broad query for the whole chapter.
 
-4. Call Syntara MCP for evidence. Prefer search/context tools for source gathering, then use RAG only for bounded subquestions. For expected tool semantics, read `references/syntara-mcp-tools.md`.
+4. Call Syntara MCP for evidence. Prefer search/context tools for source gathering, then use RAG only for bounded subquestions. If vector RAG is unavailable, continue with full-text search and chunk context. For expected tool semantics, read `references/syntara-mcp-tools.md`.
 
 5. Use WorkBuddy `资料库` / Tencent Docs material as cloud corpus when available. Treat it as user-owned style, outline, notes, and draft context; do not treat it as peer-reviewed literature unless the document itself contains traceable citations. For details, read `references/tencent-docs-corpus.md`.
 

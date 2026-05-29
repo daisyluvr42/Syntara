@@ -3,6 +3,7 @@
 __pycache__/
 *.pyc
 data/
+styles/*/
 frontend/node_modules/
 frontend/dist/
 .claude/settings.local.json
