@@ -35,6 +35,15 @@ python mcp/install_syntara_workbuddy.py
 
 然后在 WorkBuddy 的 MCP 管理页信任并启用 `syntara`。
 
+如果使用 TRAE SOLO：
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py
+```
+
+然后重启 TRAE SOLO，并在 MCP 面板中启用 `syntara`。
+
 完整教程见 [docs/installation-and-usage.md](docs/installation-and-usage.md)。
 
 ## 仓库结构
@@ -86,6 +95,15 @@ python mcp/install_syntara_workbuddy.py
 ```
 
 Then trust and enable `syntara` in WorkBuddy's MCP management page.
+
+For TRAE SOLO:
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py
+```
+
+Then restart TRAE SOLO and enable `syntara` from the MCP panel if prompted.
 
 For full setup and usage instructions, see [docs/installation-and-usage.md](docs/installation-and-usage.md).
 

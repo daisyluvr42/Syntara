@@ -99,7 +99,32 @@ python mcp/install_syntara_workbuddy.py \
 python mcp/install_syntara_workbuddy.py --setup-style
 ```
 
-## 5. 安装 WorkBuddy Skill
+## 5. 连接 TRAE SOLO MCP
+
+TRAE SOLO 也支持 MCP。Syntara 使用 stdio MCP，因此可以复用同一个后端入口。
+
+确认依赖已经安装后，在项目根目录执行：
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py
+```
+
+安装脚本会写入 TRAE SOLO 用户级 MCP 配置：
+
+```text
+~/Library/Application Support/TRAE SOLO/User/mcp.json
+```
+
+同时会把四个 Syntara Skill 复制到当前项目的 Trae Skill 目录：
+
+```text
+.trae/skills/
+```
+
+然后重启 TRAE SOLO，在 MCP 面板中启用 `syntara`。如果 TRAE SOLO 没有自动识别，先在 MCP 面板刷新；仍不可见时，可以从上面的 `mcp.json` 复制 `syntara` 配置到 Trae 的 MCP 配置界面。
+
+## 6. 安装 WorkBuddy Skill
 
 仓库内置四个 Skill：
 
@@ -125,7 +150,7 @@ python mcp/install_syntara_workbuddy.py
 - `syntara-academic-writing`：学术书籍写作，适用于基于 PDF、给定来源文档、Syntara 项目库、PubMed 和其他可用学术源的书籍章节或长篇学术/专业写作。
 - `syntara-literature-review`：文献综述、related work、研究差距、主题证据综合，使用同一套 PDF、给定来源文档、Syntara 项目库、PubMed 和其他可用学术源。
 
-## 6. 导入资料
+## 7. 导入资料
 
 Syntara 把资料分成两类：
 
@@ -142,7 +167,7 @@ ai-agent-notes
 
 这样不同主题的文献库不会混在一起。
 
-### 6.1 通过网页界面导入
+### 7.1 通过网页界面导入
 
 启动 `./start.sh` 后打开：
 
@@ -152,7 +177,7 @@ http://127.0.0.1:5173
 
 可在本地界面中管理文献、语料、搜索、引用和 AI 配置。
 
-### 6.2 通过 WorkBuddy 导入本地 PDF
+### 7.2 通过 WorkBuddy 导入本地 PDF
 
 在 WorkBuddy 中使用 Syntara MCP，可让它调用：
 
@@ -167,7 +192,7 @@ syntara_import_literature_pdfs
 - `recursive`：是否递归读取子文件夹
 - `project`：项目 slug
 
-### 6.3 通过 PubMed 导入
+### 7.3 通过 PubMed 导入
 
 先搜索：
 
@@ -183,7 +208,7 @@ syntara_import_pubmed
 
 如果导入到某个主题，记得传入 `project`。
 
-### 6.4 通过 WorkBuddy 资料库或腾讯文档导入语料
+### 7.4 通过 WorkBuddy 资料库或腾讯文档导入语料
 
 WorkBuddy 可以先读取资料库或腾讯文档内容，再调用：
 
@@ -202,7 +227,7 @@ syntara_import_corpus_text
 
 这些内容默认属于 Corpus，不应当当作正式文献引用。若笔记中提到论文，应通过 PDF 或 PubMed 把原始论文加入 Literature。
 
-## 7. 建立和复用风格档案
+## 8. 建立和复用风格档案
 
 Syntara 可以把你的旧文章、旧章节或腾讯文档语料提炼成项目级 style profile。建议用 `syntara-style-profiler` 专门完成这一步，它会按固定维度提炼风格，并保存为 Markdown + JSON。正式写作时，其他 Skill 会优先查找当前 `project` 的默认风格档案；如果存在，会自动应用。没有默认档案时，Skill 会使用默认去 AI 化风格，并轻提示你可以提供风格样本。
 
@@ -238,7 +263,7 @@ syntara_set_default_style_profile
 
 关键是为不同文体设置不同 `style_type`，例如 `wechat-longform`、`professional-book`、`literature-review`、`tutorial` 或 `ppt`。Syntara 会把它们保存为不同风格档案，Skill 写作时按任务类型调用对应档案。
 
-## 8. 在 WorkBuddy 中写作
+## 9. 在 WorkBuddy 中写作
 
 推荐流程：
 
@@ -268,7 +293,7 @@ syntara_set_default_style_profile
 先用 Syntara 检索证据，不要直接编造引用。
 ```
 
-## 9. AI 与 Embedding 配置
+## 10. AI 与 Embedding 配置
 
 Syntara 支持本地和云端 AI provider。常用方式：
 
@@ -290,7 +315,7 @@ EMBEDDING_API_KEY=
 EMBEDDING_MODE=python ./start.sh
 ```
 
-## 10. 本地数据位置
+## 11. 本地数据位置
 
 本地数据默认写入：
 
@@ -310,7 +335,7 @@ data/
 
 `data/` 不会提交到 Git。备份或迁移文献库时，备份整个 `data/` 目录即可。
 
-## 10. 常见问题
+## 12. 常见问题
 
 ### WorkBuddy 看不到 `syntara`
 
@@ -447,7 +472,32 @@ Or use the interactive setup:
 python mcp/install_syntara_workbuddy.py --setup-style
 ```
 
-## 5. Install WorkBuddy Skills
+## 5. Connect TRAE SOLO MCP
+
+TRAE SOLO also supports MCP. Syntara uses stdio MCP, so it can reuse the same backend entrypoint.
+
+After installing dependencies, run this from the project root:
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py
+```
+
+The installer writes the TRAE SOLO user-level MCP config here:
+
+```text
+~/Library/Application Support/TRAE SOLO/User/mcp.json
+```
+
+It also copies the four Syntara skills into the current project's Trae skill directory:
+
+```text
+.trae/skills/
+```
+
+Then restart TRAE SOLO and enable `syntara` from the MCP panel. If TRAE SOLO does not pick it up automatically, refresh the MCP panel; if it is still missing, copy the `syntara` entry from the `mcp.json` above into Trae's MCP configuration UI.
+
+## 6. Install WorkBuddy Skills
 
 The repository includes four skills:
 
@@ -473,7 +523,7 @@ Skill roles:
 - `syntara-academic-writing`: academic book writing for chapters or long-form scholarly/professional prose from PDFs, provided source documents, Syntara project libraries, PubMed, and other available academic sources.
 - `syntara-literature-review`: literature reviews, related work, research gaps, and thematic evidence synthesis using the same PDF, provided-document, Syntara project, PubMed, and available academic-source base.
 
-## 6. Import Materials
+## 7. Import Materials
 
 Syntara separates materials into two groups:
 
@@ -490,7 +540,7 @@ ai-agent-notes
 
 This keeps unrelated topics separate.
 
-### 6.1 Import Through the Web UI
+### 7.1 Import Through the Web UI
 
 After starting `./start.sh`, open:
 
@@ -500,7 +550,7 @@ http://127.0.0.1:5173
 
 The web UI can manage literature, corpora, search, citations, and AI provider settings.
 
-### 6.2 Import Local PDFs Through WorkBuddy
+### 7.2 Import Local PDFs Through WorkBuddy
 
 In WorkBuddy, use the Syntara MCP tool:
 
@@ -515,7 +565,7 @@ Common arguments:
 - `recursive`: whether to include subfolders
 - `project`: the project slug
 
-### 6.3 Import From PubMed
+### 7.3 Import From PubMed
 
 Search first:
 
@@ -531,7 +581,7 @@ syntara_import_pubmed
 
 Pass `project` when importing into a specific topic library.
 
-### 6.4 Import WorkBuddy Knowledge Base or Tencent Docs Content
+### 7.4 Import WorkBuddy Knowledge Base or Tencent Docs Content
 
 WorkBuddy can read knowledge-base or Tencent Docs content first, then call:
 
@@ -550,7 +600,7 @@ Use this for:
 
 These materials belong to Corpus by default and should not be treated as formal literature citations. If a note mentions a paper, add the original paper through PDF or PubMed import.
 
-## 7. Build And Reuse Style Profiles
+## 8. Build And Reuse Style Profiles
 
 Syntara can turn prior articles, book chapters, or Tencent Docs corpora into project-scoped style profiles. Use `syntara-style-profiler` for this step: it extracts style along fixed dimensions and saves both Markdown and JSON. For formal writing, other skills first look for the default style profile for the current `project`; if one exists, it is applied automatically. If none exists, the skill uses the default de-AI pass and lightly suggests providing style samples.
 
@@ -586,7 +636,7 @@ syntara_set_default_style_profile
 
 Set a different `style_type` for each writing form, such as `wechat-longform`, `professional-book`, `literature-review`, `tutorial`, or `ppt`. Syntara stores them as separate style profiles, and skills choose the matching profile for the current writing task.
 
-## 8. Writing With WorkBuddy
+## 9. Writing With WorkBuddy
 
 Recommended workflow:
 
@@ -616,7 +666,7 @@ Read my attached previous chapter as style corpus, then outline a professional b
 Use Syntara for evidence retrieval first. Do not invent citations.
 ```
 
-## 9. AI and Embedding Configuration
+## 10. AI and Embedding Configuration
 
 Syntara supports local and cloud AI providers. Common options:
 
@@ -638,7 +688,7 @@ If you do not have a local embedding service, use the built-in lightweight Pytho
 EMBEDDING_MODE=python ./start.sh
 ```
 
-## 10. Local Data
+## 11. Local Data
 
 Local data is written to:
 
@@ -658,7 +708,7 @@ It includes:
 
 `data/` is excluded from Git. To back up or move your library, back up the entire `data/` directory.
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 ### WorkBuddy Does Not Show `syntara`
 
