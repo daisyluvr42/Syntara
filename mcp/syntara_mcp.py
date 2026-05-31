@@ -167,7 +167,7 @@ TOOLS: list[dict[str, Any]] = [
     },
     {
         "name": "syntara_build_style_profile",
-        "description": "Extract a reusable structured writing style profile from given corpus text or imported Syntara corpus entries.",
+        "description": "Extract a reusable structured writing style profile from resolved user-owned corpus text or imported Syntara corpus entries. If the user gave an explicit path or file list, pass only content from that boundary.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -179,9 +179,9 @@ TOOLS: list[dict[str, Any]] = [
                     "items": {"type": "string"},
                     "description": "Optional Syntara corpus ids to use as style examples.",
                 },
-                "tag": {"type": "string", "description": "Optional corpus tag to collect style examples from."},
-                "content": {"type": "string", "description": "Optional direct style corpus content from WorkBuddy/ima/Tencent Docs."},
-                "source_title": {"type": "string", "description": "Title for direct style corpus content."},
+                "tag": {"type": "string", "description": "Optional corpus tag to collect style examples from. Use only when the tag represents the resolved style corpus."},
+                "content": {"type": "string", "description": "Optional direct style corpus content from WorkBuddy/ima/Tencent Docs or a user-specified file/folder boundary."},
+                "source_title": {"type": "string", "description": "Title, path, or corpus label for direct style corpus content."},
                 "provider_id": {"type": "string", "description": "Optional Syntara AI provider id."},
                 "set_default": {"type": "boolean", "default": True},
             },
@@ -227,7 +227,7 @@ TOOLS: list[dict[str, Any]] = [
                 "name": {"type": "string", "description": "Style profile name."},
                 "project": {"type": "string", "description": "Project slug.", "default": "default"},
                 "style_type": {"type": "string", "description": "Optional writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt."},
-                "profile_json": {"type": "object", "description": "Optional structured profile JSON."},
+                "profile_json": {"type": "object", "description": "Optional structured profile JSON, preferably using syntara.style_profile.v1 source/evidence fields."},
                 "profile_markdown": {"type": "string", "description": "Human-readable style profile markdown."},
                 "source_corpus_ids": {
                     "type": "array",

@@ -46,12 +46,17 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
 
 2. Inventory the corpus:
    - List files/documents first.
+   - Resolve the corpus exactly from the user's prompt: folder path, file list, knowledge-base name, document title, project slug, or search criteria. If multiple plausible corpora match, ask or state the chosen match before extraction.
+   - Treat an explicit user-provided path or file list as the corpus boundary. Do not search the current workspace, sibling folders, or earlier candidate folders for extra style samples unless the user asks to broaden the corpus.
    - Prefer user-owned prose. Do not treat literature PDFs, research sources, or third-party examples as user voice unless the user explicitly asks to imitate them.
+   - Apply inclusion/exclusion rules only when the user states them or the corpus has an explicit manifest/readme that marks documents to include or exclude. Record the rule used.
    - If the corpus mixes genres, group by `style_type` and build separate profiles. Do not merge professional chapters, public essays, tutorials, slide scripts, and social posts into one profile unless the user asks for a house style.
+   - Record both included and excluded source counts. `source_count` must equal the number of included files actually analyzed, and `source_titles` must be real included filenames/ids.
 
 3. Read enough material:
    - For small corpora, read all files.
    - For larger corpora, read a representative set across time, topic, and genre; include at least 5 substantial samples when available.
+   - For dated or sequential corpora, stratify by time period. Identify early/middle/recent samples and state which period should dominate future imitation. Do not average early abandoned habits into the current voice.
    - Preserve exact source filenames in the profile metadata.
 
 4. Check existing Syntara profiles:
@@ -60,27 +65,36 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
    - Compare the old profile with the new corpus findings. Preserve useful existing rules unless contradicted by the corpus.
 
 5. Extract along fixed dimensions:
+   - writer profile and source of voice;
    - overall tone;
+   - tone spectrum by genre or context;
    - opening patterns;
    - structure and section rhythm;
    - paragraph and sentence rhythm;
    - claim style and argument flow;
    - evidence and fact discipline;
+   - reader relationship and expectation management;
    - vocabulary preferences;
    - banned words, phrases, and AI-like moves;
    - formatting and visual habits;
+   - cross-genre constants;
    - genre-specific variants;
+   - style evolution and sample priority;
    - revision and final-pass checklist.
+   For each important rule, include source evidence: at least one source filename and a short example or paraphrased example. Distinguish "appears in corpus" from "recommended preference"; do not promote low-frequency or user-disfavored AI-like phrases into positive lexicon preferences.
 
 6. Produce `profile_json`:
    - Use the schema in `references/profile-schema.md`.
    - Keep JSON compact and practical. Put long explanations in Markdown, not JSON.
    - Include `source_count`, `source_titles`, `project`, `style_type`, and `updated_from_profile_id` when applicable.
+   - Include `source.excluded_sources`, `evidence`, `tone_spectrum`, `genre_matrix`, `reader_relationship`, and `style_evolution` when the corpus supports them.
+   - Validate source consistency before saving: every `source_titles` entry must belong to the resolved corpus, user-excluded files must not appear in `source_titles`, and counts must match.
 
 7. Produce `profile_markdown`:
    - Use `references/profile-template.md`.
    - The Markdown must be directly usable as a writing brief.
-   - Include concrete examples only when short and necessary.
+   - Include concrete examples or tight paraphrases for the most important rules. Prefer short evidence over unsupported adjectives.
+   - Include a source audit note: corpus path, included count, excluded count, sample strategy, and any uncertainty.
 
 8. Persist:
    - Prefer `syntara_build_style_profile` when Syntara backend AI extraction is configured and the corpus content or corpus ids are available.

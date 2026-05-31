@@ -28,12 +28,21 @@ async def build_style_profile(
     provider_id: str | None = None,
     set_default: bool = True,
 ) -> dict:
-    source_texts, source_ids = _collect_style_sources(corpus_ids or [], tag, content, source_title)
+    source_texts, source_ids, source_titles = _collect_style_sources(corpus_ids or [], tag, content, source_title)
     combined = _trim_corpus("\n\n---\n\n".join(source_texts))
     if not combined.strip():
         raise ValueError("No style corpus content found")
 
-    profile_json = await _extract_profile_json(name, project, combined, provider_id, style_type)
+    source_label = source_title or (f"tag:{tag}" if tag else ",".join(source_ids) or "direct style corpus")
+    profile_json = await _extract_profile_json(
+        name,
+        project,
+        combined,
+        provider_id,
+        style_type,
+        source_label,
+        source_titles,
+    )
     profile_markdown = _profile_to_markdown(profile_json)
 
     return save_style_profile(
@@ -227,12 +236,14 @@ def _collect_style_sources(
     tag: str | None,
     content: str | None,
     source_title: str | None,
-) -> tuple[list[str], list[str]]:
+) -> tuple[list[str], list[str], list[str]]:
     texts = []
     source_ids = []
+    source_titles = []
     if content:
         title = source_title or "direct style corpus"
         texts.append(f"# {title}\n\n{content}")
+        source_titles.append(title)
 
     conn = get_connection()
     rows = []
@@ -251,7 +262,8 @@ def _collect_style_sources(
         if text.strip():
             texts.append(f"# {row['title']}\n\n{text}")
             source_ids.append(row["id"])
-    return texts, source_ids
+            source_titles.append(row["title"])
+    return texts, source_ids, source_titles
 
 
 def _read_corpus_text(row) -> str:
@@ -273,7 +285,10 @@ async def _extract_profile_json(
     corpus: str,
     provider_id: str | None,
     style_type: str | None,
+    source_label: str,
+    source_titles: list[str],
 ) -> dict:
+    source_titles_json = json.dumps(source_titles, ensure_ascii=False, indent=2)
     prompt = f"""
 You extract reusable Chinese writing style profiles for Syntara.
 Return strict JSON only. No markdown fence.
@@ -281,24 +296,39 @@ Return strict JSON only. No markdown fence.
 Profile name: {name}
 Project: {project}
 Style type: {style_type or "auto"}
+Source label: {source_label or "direct style corpus"}
+Source titles:
+{source_titles_json}
 
-The JSON object must use these keys:
+The JSON object must follow `syntara.style_profile.v1` and use these practical keys:
+- schema
 - name
 - project
 - style_type
-- audience_and_tone
-- argument_style
-- structure_and_rhythm
-- sentence_and_paragraph_rules
-- rhetoric_devices
-- terminology_rules
-- evidence_and_caveats
-- do
-- avoid
+- source: object with path_or_id, source_count, source_titles, excluded_sources, sample_strategy
+- writer_profile
+- tone
+- tone_spectrum
+- structure
+- rhythm
+- argumentation
+- reader_relationship
+- lexicon
+- formatting
+- anti_ai
+- evidence
+- genre_matrix
+- cross_genre_constants
+- style_evolution
+- revision_workflow
+- confidence
 - reusable_markdown_profile
 
 Write `reusable_markdown_profile` in Chinese, shaped like a compact style document a writing Skill can follow.
 Do not copy long source passages. Extract habits, rules, and constraints.
+Tie important claims to short examples or tight paraphrases in `evidence`.
+Distinguish "appears in corpus" from "recommended to imitate".
+Do not include source titles outside the provided source list.
 
 Style corpus:
 {corpus}
@@ -310,10 +340,18 @@ Style corpus:
         temperature=0.2,
     )
     data = _parse_json_object(raw)
+    data.setdefault("schema", "syntara.style_profile.v1")
     data.setdefault("name", name)
     data.setdefault("project", project)
     if style_type:
         data.setdefault("style_type", style_type)
+    source = data.setdefault("source", {})
+    if isinstance(source, dict):
+        source["path_or_id"] = source_label
+        source["source_count"] = len(source_titles)
+        source["source_titles"] = source_titles
+        source.setdefault("excluded_sources", [])
+        source.setdefault("sample_strategy", "mcp-build")
     return data
 
 
@@ -340,7 +378,7 @@ Existing profile Markdown:
 
 Required JSON keys:
 - revision_summary: concise Chinese summary of what the user changed.
-- profile_json_patch: partial JSON to merge into the existing Syntara style profile. Use existing schema keys where possible, especially tone, structure, rhythm, argumentation, lexicon, formatting, anti_ai, revision_workflow.
+- profile_json_patch: partial JSON to merge into the existing Syntara style profile. Use existing schema keys where possible, especially tone, tone_spectrum, structure, rhythm, argumentation, reader_relationship, lexicon, formatting, anti_ai, evidence, genre_matrix, style_evolution, revision_workflow.
 - revision_preferences: object with do, avoid, sentence_level, structure_level, diction_level, evidence_level, formatting_level, examples.
 - reusable_markdown_addendum: Chinese Markdown section to append to the existing profile. It must be directly usable as writing instructions.
 
