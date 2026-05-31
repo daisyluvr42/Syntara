@@ -18,6 +18,8 @@ PYTHON = ROOT / ".venv" / "bin" / "python"
 MCP = ROOT / "mcp" / "syntara_mcp.py"
 TRAE_SOLO_USER_DIR = Path.home() / "Library" / "Application Support" / "TRAE SOLO" / "User"
 TRAE_SOLO_MCP_CONFIG = TRAE_SOLO_USER_DIR / "mcp.json"
+TRAE_GLOBAL_SKILLS_DIR = Path.home() / ".trae" / "skills"
+LEGACY_PROJECT_SKILLS_DIR = ROOT / ".trae" / "skills"
 SKILLS = [
     "syntara-style-profiler",
     "syntara-knowledge-writing",
@@ -28,11 +30,7 @@ SKILLS = [
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Install Syntara MCP into TRAE SOLO.")
-    parser.add_argument(
-        "--project-dir",
-        default=str(ROOT),
-        help="Project directory that should receive .trae/skills. Defaults to this Syntara checkout.",
-    )
+    parser.add_argument("--uninstall", action="store_true", help="Remove Syntara MCP config and global Trae skills.")
     parser.add_argument("--skip-skills", action="store_true", help="Only install MCP config; do not copy Trae skills.")
     return parser.parse_args()
 
@@ -67,20 +65,40 @@ def install_mcp_config() -> Path:
     return TRAE_SOLO_MCP_CONFIG
 
 
-def install_trae_skills(project_dir: Path) -> list[str]:
-    skills_dir = project_dir / ".trae" / "skills"
-    skills_dir.mkdir(parents=True, exist_ok=True)
+def uninstall_mcp_config() -> bool:
+    config = read_config(TRAE_SOLO_MCP_CONFIG)
+    servers = config.get("mcpServers")
+    if not isinstance(servers, dict) or "syntara" not in servers:
+        return False
+    del servers["syntara"]
+    write_config(TRAE_SOLO_MCP_CONFIG, config)
+    return True
+
+
+def install_trae_skills() -> list[str]:
+    TRAE_GLOBAL_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
     installed: list[str] = []
     for skill_name in SKILLS:
         src = ROOT / "skills" / skill_name
         if not src.exists():
             raise SystemExit(f"Missing skill directory: {src}")
-        dst = skills_dir / skill_name
+        dst = TRAE_GLOBAL_SKILLS_DIR / skill_name
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(src, dst)
         installed.append(str(dst))
     return installed
+
+
+def uninstall_trae_skills() -> list[str]:
+    removed: list[str] = []
+    for skills_dir in [TRAE_GLOBAL_SKILLS_DIR, LEGACY_PROJECT_SKILLS_DIR]:
+        for skill_name in SKILLS:
+            dst = skills_dir / skill_name
+            if dst.exists():
+                shutil.rmtree(dst)
+                removed.append(str(dst))
+    return removed
 
 
 def restart_existing_syntara_mcp() -> int:
@@ -112,7 +130,6 @@ def restart_existing_syntara_mcp() -> int:
 
 def main() -> int:
     args = parse_args()
-    project_dir = Path(args.project_dir).expanduser().resolve()
 
     if not PYTHON.exists():
         print(f"Missing virtualenv Python: {PYTHON}", file=sys.stderr)
@@ -125,17 +142,34 @@ def main() -> int:
         print(f"TRAE SOLO user directory not found: {TRAE_SOLO_USER_DIR}", file=sys.stderr)
         print("Open TRAE SOLO once, then run this installer again.", file=sys.stderr)
         return 1
-    if not project_dir.exists():
-        print(f"Project directory not found: {project_dir}", file=sys.stderr)
-        return 1
+
+    if args.uninstall:
+        removed_config = uninstall_mcp_config()
+        removed_skills = [] if args.skip_skills else uninstall_trae_skills()
+        killed = restart_existing_syntara_mcp()
+
+        if removed_config:
+            print(f"Removed Syntara MCP from TRAE SOLO: {TRAE_SOLO_MCP_CONFIG}")
+        else:
+            print("Syntara MCP was not present in TRAE SOLO config.")
+        if removed_skills:
+            print("Removed TRAE SOLO Syntara skills:")
+            for skill in removed_skills:
+                print(f"- {skill}")
+        elif not args.skip_skills:
+            print("No TRAE SOLO Syntara skills were found.")
+        if killed:
+            print(f"Stopped {killed} existing Syntara MCP process(es).")
+        print("Restart TRAE SOLO to refresh the MCP and skill lists.")
+        return 0
 
     config_path = install_mcp_config()
-    installed_skills = [] if args.skip_skills else install_trae_skills(project_dir)
+    installed_skills = [] if args.skip_skills else install_trae_skills()
     killed = restart_existing_syntara_mcp()
 
     print(f"Installed Syntara MCP for TRAE SOLO: {config_path}")
     if installed_skills:
-        print("Installed TRAE SOLO project skills:")
+        print("Installed TRAE SOLO global skills:")
         for skill in installed_skills:
             print(f"- {skill}")
     if killed:

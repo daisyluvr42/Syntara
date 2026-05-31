@@ -44,6 +44,13 @@ python mcp/install_syntara_trae_solo.py
 
 然后重启 TRAE SOLO，并在 MCP 面板中启用 `syntara`。
 
+卸载 Trae SOLO 接入：
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py --uninstall
+```
+
 完整教程见 [docs/installation-and-usage.md](docs/installation-and-usage.md)。
 
 ## 仓库结构
@@ -104,6 +111,13 @@ python mcp/install_syntara_trae_solo.py
 ```
 
 Then restart TRAE SOLO and enable `syntara` from the MCP panel if prompted.
+
+Uninstall the TRAE SOLO integration:
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py --uninstall
+```
 
 For full setup and usage instructions, see [docs/installation-and-usage.md](docs/installation-and-usage.md).
 

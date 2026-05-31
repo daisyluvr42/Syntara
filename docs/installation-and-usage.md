@@ -116,13 +116,24 @@ python mcp/install_syntara_trae_solo.py
 ~/Library/Application Support/TRAE SOLO/User/mcp.json
 ```
 
-同时会把四个 Syntara Skill 复制到当前项目的 Trae Skill 目录：
+同时会把四个 Syntara Skill 复制到 Trae 全局 Skill 目录：
 
 ```text
-.trae/skills/
+~/.trae/skills/
 ```
 
+这样用户不必在 Syntara 项目目录里写作，打开任意工作区都能复用这些 Skill。
+
 然后重启 TRAE SOLO，在 MCP 面板中启用 `syntara`。如果 TRAE SOLO 没有自动识别，先在 MCP 面板刷新；仍不可见时，可以从上面的 `mcp.json` 复制 `syntara` 配置到 Trae 的 MCP 配置界面。
+
+卸载 Trae SOLO 接入：
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py --uninstall
+```
+
+卸载只会移除 Trae SOLO 中的 `syntara` MCP 配置和复制进去的 Syntara Skill，不会删除本地 Syntara 数据库、PDF、语料或风格档案。
 
 ## 6. 安装 WorkBuddy Skill
 
@@ -489,13 +500,24 @@ The installer writes the TRAE SOLO user-level MCP config here:
 ~/Library/Application Support/TRAE SOLO/User/mcp.json
 ```
 
-It also copies the four Syntara skills into the current project's Trae skill directory:
+It also copies the four Syntara skills into Trae's global skill directory:
 
 ```text
-.trae/skills/
+~/.trae/skills/
 ```
 
+This lets users reuse the skills from any workspace instead of only inside the Syntara checkout.
+
 Then restart TRAE SOLO and enable `syntara` from the MCP panel. If TRAE SOLO does not pick it up automatically, refresh the MCP panel; if it is still missing, copy the `syntara` entry from the `mcp.json` above into Trae's MCP configuration UI.
+
+Uninstall the TRAE SOLO integration:
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_trae_solo.py --uninstall
+```
+
+Uninstall removes only the `syntara` MCP entry and copied Syntara skills from TRAE SOLO. It does not delete local Syntara databases, PDFs, corpora, or style profiles.
 
 ## 6. Install WorkBuddy Skills
 
