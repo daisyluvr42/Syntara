@@ -103,10 +103,10 @@ For formal writing tasks such as articles, chapters, reports, review drafts, scr
 
 1. Infer the Syntara `project` from the task or use the project named by the user.
 2. Infer the `style_type` from the requested output, such as `wechat-longform`, `professional-book`, `literature-review`, `tutorial`, `report`, `script`, or `ppt`.
-3. Call `syntara_list_style_profiles` with the inferred `project` and `style_type` when available; then call `syntara_get_style_profile` for the best matching profile. In WorkBuddy, these custom MCP tools may appear as `syntara_syntara_list_style_profiles` and `syntara_syntara_get_style_profile`; use the visible tool with the same meaning.
-4. If no type-specific match exists, call `syntara_get_style_profile` with `default: true` for that project when available.
-5. If the project default is not found or the project is unclear, call `syntara_list_style_profiles` with no project filter.
-6. If `syntara_list_style_profiles` returns exactly one profile, or one clear default profile, call `syntara_get_style_profile` for that profile id and use its `profile_markdown` as the style brief.
+3. Call `syntara_style_profile` with `action: "list"`, the inferred `project`, and `style_type` when available; then call `syntara_style_profile` with `action: "get"` for the best matching profile.
+4. If no type-specific match exists, call `syntara_style_profile` with `action: "get"` and `default: true` for that project when available.
+5. If the project default is not found or the project is unclear, call `syntara_style_profile` with `action: "list"` and no project filter.
+6. If the list returns exactly one profile, or one clear default profile, call `syntara_style_profile` with `action: "get"` for that profile id and use its `profile_markdown` as the style brief.
 7. If no profile exists, run first-use style setup before defaulting:
    - Look for user-owned style samples in the prompt, attached files, current WorkBuddy/ima/Tencent Docs knowledge base, or Syntara corpus. Likely titles/tags include `style-corpus`, `style`, `风格`, `旧文`, `往期文章`, `代表作`, `书稿`, `章节`, `公众号`, `草稿`, or `voice`.
    - If mixed style samples from different genres or writing types are found, group them by `style_type` first. Build separate profiles instead of merging them.

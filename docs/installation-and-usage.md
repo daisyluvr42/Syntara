@@ -193,11 +193,12 @@ http://127.0.0.1:5173
 在 WorkBuddy 中使用 Syntara MCP，可让它调用：
 
 ```text
-syntara_import_literature_pdfs
+syntara_import
 ```
 
 常用参数：
 
+- `source_type`：`literature_pdfs`
 - `file_paths`：PDF 文件路径列表
 - `folder_path`：PDF 文件夹
 - `recursive`：是否递归读取子文件夹
@@ -208,23 +209,23 @@ syntara_import_literature_pdfs
 先搜索：
 
 ```text
-syntara_search_pubmed
+syntara_external_search
 ```
 
 再导入选中的 PMID：
 
 ```text
-syntara_import_pubmed
+syntara_import
 ```
 
-如果导入到某个主题，记得传入 `project`。
+搜索时传入 `provider: "pubmed"`；导入时传入 `source_type: "pubmed"`。如果导入到某个主题，记得传入 `project`。
 
 ### 7.4 通过 WorkBuddy 资料库或腾讯文档导入语料
 
 WorkBuddy 可以先读取资料库或腾讯文档内容，再调用：
 
 ```text
-syntara_import_corpus_text
+syntara_import
 ```
 
 适合导入：
@@ -236,6 +237,8 @@ syntara_import_corpus_text
 - 章节大纲
 - 腾讯文档中的协作材料
 
+调用时传入 `source_type: "corpus_text"`。
+
 这些内容默认属于 Corpus，不应当当作正式文献引用。若笔记中提到论文，应通过 PDF 或 PubMed 把原始论文加入 Literature。
 
 ## 8. 建立和复用风格档案
@@ -245,12 +248,7 @@ Syntara 可以把你的旧文章、旧章节或腾讯文档语料提炼成项目
 常用 MCP 工具：
 
 ```text
-syntara_build_style_profile
-syntara_update_style_profile_from_revision
-syntara_save_style_profile
-syntara_list_style_profiles
-syntara_get_style_profile
-syntara_set_default_style_profile
+syntara_style_profile
 ```
 
 推荐做法：
@@ -259,17 +257,14 @@ syntara_set_default_style_profile
 2. 使用 `syntara-style-profiler` 为对应 `project` 和 `style_type` 生成规范 Markdown + JSON 风格档案。
 3. 设置为默认后，后续正式写作会自动读取该风格档案。
 
-如果 Syntara 后端没有配置 AI provider，WorkBuddy 也可以先提炼一份 Markdown/JSON 风格档案，再调用 `syntara_save_style_profile` 保存为项目默认风格。
+如果 Syntara 后端没有配置 AI provider，WorkBuddy 也可以先提炼一份 Markdown/JSON 风格档案，再调用 `syntara_style_profile` 的 `action: "save"` 保存为项目默认风格。
 
-如果用户先让 WorkBuddy 生成文章，随后自己做了一版修改，可以把“原始生成稿 + 用户修改稿”回传给 `syntara-style-profiler`。它会调用 `syntara_update_style_profile_from_revision`，从差异中提炼删改偏好、措辞偏好、结构偏好和反 AI 味偏好，并整合进当前项目默认 style profile，而不是另存成一份孤立的 diff 文档。
+如果用户先让 WorkBuddy 生成文章，随后自己做了一版修改，可以把“原始生成稿 + 用户修改稿”回传给 `syntara-style-profiler`。它会调用 `syntara_style_profile` 的 `action: "update_from_revision"`，从差异中提炼删改偏好、措辞偏好、结构偏好和反 AI 味偏好，并整合进当前项目默认 style profile，而不是另存成一份孤立的 diff 文档。
 
 后续如果要补充新的题材或文体，不需要重新安装。可以继续调用：
 
 ```text
-syntara_build_style_profile
-syntara_update_style_profile_from_revision
-syntara_save_style_profile
-syntara_set_default_style_profile
+syntara_style_profile
 ```
 
 关键是为不同文体设置不同 `style_type`，例如 `wechat-longform`、`professional-book`、`literature-review`、`tutorial` 或 `ppt`。Syntara 会把它们保存为不同风格档案，Skill 写作时按任务类型调用对应档案。
@@ -280,13 +275,13 @@ syntara_set_default_style_profile
 
 1. 选择一个 Syntara Skill，例如 `syntara-literature-review`。
 2. 告诉 WorkBuddy 主题、目标文体、读者、输出长度和 `project`。
-3. 如果已有文献库，让 WorkBuddy 先调用 `syntara_project_summary` 看项目内容。
+3. 如果已有文献库，让 WorkBuddy 先调用 `syntara_status` 的 `action: "project_summary"` 看项目内容。
 4. 正式写作时，Skill 会先查找当前项目默认 style profile。
-5. 让 WorkBuddy 用 `syntara_search_literature_grouped` 或 `syntara_search` 找证据。
-6. 对关键证据调用 `syntara_get_chunk_context` 检查上下文。
-7. 对窄问题调用 `syntara_rag_answer`，不要让 RAG 直接写整篇文章。
+5. 让 WorkBuddy 用 `syntara_retrieve` 的 `mode: "literature_grouped"` 或 `mode: "search"` 找证据。
+6. 对关键证据调用 `syntara_retrieve` 的 `mode: "chunk_context"` 检查上下文。
+7. 对窄问题调用 `syntara_retrieve` 的 `mode: "rag_answer"`，不要让 RAG 直接写整篇文章。
 8. 让 Skill 负责组织结构、应用风格、写正文、检查 unsupported claims。
-9. 完成后用 `syntara_format_citations` 或 `syntara_export_bibtex` 处理引用。
+9. 完成后用 `syntara_citations` 的 `action: "format"` 或 `action: "export_bibtex"` 处理引用。
 
 可以这样对 WorkBuddy 说：
 
@@ -577,11 +572,12 @@ The web UI can manage literature, corpora, search, citations, and AI provider se
 In WorkBuddy, use the Syntara MCP tool:
 
 ```text
-syntara_import_literature_pdfs
+syntara_import
 ```
 
 Common arguments:
 
+- `source_type`: `literature_pdfs`
 - `file_paths`: a list of PDF file paths
 - `folder_path`: a folder containing PDFs
 - `recursive`: whether to include subfolders
@@ -592,23 +588,23 @@ Common arguments:
 Search first:
 
 ```text
-syntara_search_pubmed
+syntara_external_search
 ```
 
 Then import selected PMIDs:
 
 ```text
-syntara_import_pubmed
+syntara_import
 ```
 
-Pass `project` when importing into a specific topic library.
+Pass `provider: "pubmed"` when searching and `source_type: "pubmed"` when importing. Pass `project` when importing into a specific topic library.
 
 ### 7.4 Import WorkBuddy Knowledge Base or Tencent Docs Content
 
 WorkBuddy can read knowledge-base or Tencent Docs content first, then call:
 
 ```text
-syntara_import_corpus_text
+syntara_import
 ```
 
 Use this for:
@@ -620,6 +616,8 @@ Use this for:
 - Chapter outlines
 - Collaborative Tencent Docs materials
 
+Pass `source_type: "corpus_text"` for this route.
+
 These materials belong to Corpus by default and should not be treated as formal literature citations. If a note mentions a paper, add the original paper through PDF or PubMed import.
 
 ## 8. Build And Reuse Style Profiles
@@ -629,12 +627,7 @@ Syntara can turn prior articles, book chapters, or Tencent Docs corpora into pro
 Common MCP tools:
 
 ```text
-syntara_build_style_profile
-syntara_update_style_profile_from_revision
-syntara_save_style_profile
-syntara_list_style_profiles
-syntara_get_style_profile
-syntara_set_default_style_profile
+syntara_style_profile
 ```
 
 Recommended flow:
@@ -643,17 +636,14 @@ Recommended flow:
 2. Use `syntara-style-profiler` to extract a normalized Markdown + JSON profile for the target `project` and `style_type`.
 3. Set it as default so future formal writing uses it automatically.
 
-If the Syntara backend has no AI provider configured, WorkBuddy can extract a compact Markdown/JSON profile itself and save it with `syntara_save_style_profile`.
+If the Syntara backend has no AI provider configured, WorkBuddy can extract a compact Markdown/JSON profile itself and save it with `syntara_style_profile` using `action: "save"`.
 
-If WorkBuddy generates a draft and the user later edits it, send the original generated draft plus the user-edited version back to `syntara-style-profiler`. It calls `syntara_update_style_profile_from_revision`, learns deletion, diction, structure, and anti-AI preferences from the diff, then merges those preferences into the current project default style profile instead of saving a separate diff note.
+If WorkBuddy generates a draft and the user later edits it, send the original generated draft plus the user-edited version back to `syntara-style-profiler`. It calls `syntara_style_profile` with `action: "update_from_revision"`, learns deletion, diction, structure, and anti-AI preferences from the diff, then merges those preferences into the current project default style profile instead of saving a separate diff note.
 
 Later, you can add new topic- or genre-specific style samples without reinstalling. Use:
 
 ```text
-syntara_build_style_profile
-syntara_update_style_profile_from_revision
-syntara_save_style_profile
-syntara_set_default_style_profile
+syntara_style_profile
 ```
 
 Set a different `style_type` for each writing form, such as `wechat-longform`, `professional-book`, `literature-review`, `tutorial`, or `ppt`. Syntara stores them as separate style profiles, and skills choose the matching profile for the current writing task.
@@ -664,13 +654,13 @@ Recommended workflow:
 
 1. Choose a Syntara skill, such as `syntara-literature-review`.
 2. Tell WorkBuddy the topic, genre, audience, target length, and `project`.
-3. If a library already exists, ask WorkBuddy to call `syntara_project_summary`.
+3. If a library already exists, ask WorkBuddy to call `syntara_status` with `action: "project_summary"`.
 4. For formal writing, the skill checks the project default style profile.
-5. Retrieve evidence with `syntara_search_literature_grouped` or `syntara_search`.
-6. Check key passages with `syntara_get_chunk_context`.
-7. Use `syntara_rag_answer` only for narrow evidence questions.
+5. Retrieve evidence with `syntara_retrieve` using `mode: "literature_grouped"` or `mode: "search"`.
+6. Check key passages with `syntara_retrieve` using `mode: "chunk_context"`.
+7. Use `syntara_retrieve` with `mode: "rag_answer"` only for narrow evidence questions.
 8. Let the skill handle structure, style application, drafting, and unsupported-claim checks.
-9. Use `syntara_format_citations` or `syntara_export_bibtex` for final citation work.
+9. Use `syntara_citations` with `action: "format"` or `action: "export_bibtex"` for final citation work.
 
 Example prompt:
 

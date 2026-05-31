@@ -37,8 +37,9 @@ When the user wants Tencent Docs material to become reusable local corpus, call 
 
 ```json
 {
-  "tool": "syntara_import_corpus_text",
+  "tool": "syntara_import",
   "arguments": {
+    "source_type": "corpus_text",
     "title": "original Tencent Docs title",
     "content": "content returned by get_content",
     "description": "Imported from WorkBuddy 资料库 / Tencent Docs",
@@ -72,8 +73,8 @@ Do not cite Tencent Docs notes as literature. If a Tencent Docs note points to a
 
 Use these routes for citable sources:
 
-- Local PDFs: call `syntara_import_literature_pdfs` with `file_paths` or `folder_path`.
-- PubMed records: call `syntara_search_pubmed` to find PMIDs, then `syntara_import_pubmed`.
+- Local PDFs: call `syntara_import` with `source_type: "literature_pdfs"` and `file_paths` or `folder_path`.
+- PubMed records: call `syntara_external_search` with `provider: "pubmed"` to find PMIDs, then `syntara_import` with `source_type: "pubmed"`.
 - Tencent Docs notes that mention papers: extract DOI/PMID/title from the note, then add the original paper through Syntara literature tools.
 
 ## Writing Pattern

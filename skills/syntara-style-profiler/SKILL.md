@@ -60,8 +60,8 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
    - Preserve exact source filenames in the profile metadata.
 
 4. Check existing Syntara profiles:
-   - Call `syntara_list_style_profiles` with `project` and `style_type` when possible.
-   - If updating an existing profile, call `syntara_get_style_profile` with `profile_id`, not `id`.
+   - Call `syntara_style_profile` with `action: "list"`, `project`, and `style_type` when possible.
+   - If updating an existing profile, call `syntara_style_profile` with `action: "get"` and `profile_id`, not `id`.
    - Compare the old profile with the new corpus findings. Preserve useful existing rules unless contradicted by the corpus.
 
 5. Extract along fixed dimensions:
@@ -97,9 +97,8 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
    - Include a source audit note: corpus path, included count, excluded count, sample strategy, and any uncertainty.
 
 8. Persist:
-   - Prefer `syntara_build_style_profile` when Syntara backend AI extraction is configured and the corpus content or corpus ids are available.
-   - If WorkBuddy has already performed the extraction, call `syntara_save_style_profile` with `name`, `project`, `style_type`, `profile_json`, `profile_markdown`, useful `tags`, and `set_default`.
-   - If the visible WorkBuddy tool name is prefixed, use the equivalent `mcp__syntara__syntara_save_style_profile` / `syntara_syntara_save_style_profile`.
+   - Prefer `syntara_style_profile` with `action: "build"` when Syntara backend AI extraction is configured and the corpus content or corpus ids are available.
+   - If WorkBuddy has already performed the extraction, call `syntara_style_profile` with `action: "save"`, `name`, `project`, `style_type`, `profile_json`, `profile_markdown`, useful `tags`, and `set_default`.
 
 9. Report:
    - Return the saved profile id.
@@ -113,7 +112,7 @@ Use this branch when the user says they edited the generated article/chapter/dec
 
 1. Resolve the target style profile:
    - Use the user's `base_profile_id` if provided.
-   - Otherwise call `syntara_get_style_profile` with the current `project` and `default: true`.
+   - Otherwise call `syntara_style_profile` with `action: "get"`, the current `project`, and `default: true`.
    - If no default profile exists, still run the revision update so Syntara can create a first profile from the user's edits.
 
 2. Compare only writing choices:
@@ -121,7 +120,7 @@ Use this branch when the user says they edited the generated article/chapter/dec
    - Separate factual corrections from style rules. A corrected fact belongs to evidence discipline, not voice imitation.
    - Prefer durable preferences over one-off edits.
 
-3. Call `syntara_update_style_profile_from_revision` with:
+3. Call `syntara_style_profile` with `action: "update_from_revision"` and:
    - `original_text`: the AI/generated draft before user edits.
    - `revised_text`: the user's edited/final version.
    - `base_profile_id` when available.

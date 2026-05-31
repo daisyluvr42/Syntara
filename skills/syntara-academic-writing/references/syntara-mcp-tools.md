@@ -1,241 +1,99 @@
-# Syntara MCP Tool Contract
+# Syntara MCP Tools
 
-Use this reference when calling the connected Syntara MCP server from WorkBuddy.
+Use these tools as the local evidence and style layer for academic/professional writing. Keep the user's visible workflow the same: choose a Syntara skill, name the `project`, then let the skill retrieve evidence, resolve style, draft, and check citations.
 
-Exact tool names may differ. Match by semantics.
+## Readiness
 
-## Readiness Rules
+- If `search_ready_vector: false`, only vector/RAG retrieval is incomplete.
+- Continue with `syntara_retrieve` using `mode: "search"`, `mode: "literature_grouped"`, and `mode: "chunk_context"`.
+- Do not draft from clinical or academic common sense when Syntara evidence is missing. Return an outline, partial draft, search report, or `待补证据`.
 
-- `search_ready_fts: true` means full-text/keyword retrieval can be used.
-- `search_ready_vector: false` means vector retrieval or RAG may be incomplete. It does not mean Syntara evidence retrieval is unavailable.
-- When vector search is not ready, use `syntara_search`, `syntara_search_literature_grouped`, and `syntara_get_chunk_context` as the evidence path.
-- Do not tell the user that Syntara search is unavailable unless both full-text search and source listing fail.
-- Do not draft evidence-backed prose from general knowledge just because vector search is unavailable.
+## Current Tool Surface
 
-## Expected Tools
+### `syntara_status`
 
-### `syntara_list_projects`
+Use for project and backend status.
 
-Purpose: list Syntara project areas. Projects are backed by `project:<slug>` tags.
+- `action: "health"`: check backend health.
+- `action: "list_projects"`: list project areas.
+- `action: "project_summary"` with `project`: inspect one project.
 
-Use for: choosing the right project before retrieval or import.
+### `syntara_retrieve`
 
-### `syntara_project_summary`
+Use for evidence retrieval.
 
-Purpose: inspect literature and corpus counts for one project.
+- `mode: "search"` with `query`, `scope`, `top_k`, optional `project`.
+- `mode: "literature_grouped"` with `zh_query` / `en_query`, `top_k`, optional `project`.
+- `mode: "chunk_context"` with `lit_id` and `chunk_index`.
+- `mode: "rag_answer"` with `question`, `search_scope`, `top_k`, optional `project`.
 
-Input:
+Use RAG only for bounded subquestions. For source gathering, prefer search and chunk context.
 
-```json
-{
-  "project": "professional-book"
-}
-```
+### `syntara_sources`
 
-Use for: confirming whether a project already has enough material.
+Use for inventory.
 
-### `syntara_search`
+- `source_type: "literature"`: list formal sources and citation metadata.
+- `source_type: "corpus"`: list notes, drafts, style samples, or other non-citation corpus items.
 
-Purpose: find evidence candidates in Syntara literature and/or corpus.
+### `syntara_import`
 
-Input:
+Use for durable local imports.
 
-```json
-{
-  "query": "clinical question or keyword query",
-  "scope": "all | literature | corpus",
-  "top_k": 10,
-  "project": "optional project slug"
-}
-```
+- `source_type: "literature_pdfs"` with `file_paths` or `folder_path`.
+- `source_type: "pubmed"` with `pmids`.
+- `source_type: "corpus_text"` with `title` and `content`.
 
-Expected output: ranked hits with title, source type, snippet/content, cite key if available, literature id, and chunk index.
+Use literature imports for citable papers. Use corpus imports for notes, outlines, Tencent Docs content, prior drafts, and style samples.
 
-Use for: first-pass evidence collection and style-corpus lookup.
+### `syntara_external_search`
 
-### `syntara_rag_answer`
+Use as the external search entrypoint before import.
 
-Purpose: answer one bounded question using Syntara retrieval.
+- `provider: "pubmed"` with `query` and `max_results`.
 
-Input:
+When another provider is added, it should appear here as a new `provider`, not as a new top-level tool.
 
-```json
-{
-  "question": "narrow question",
-  "search_scope": "all | literature | corpus",
-  "top_k": 5,
-  "use_tree": true,
-  "project": "optional project slug"
-}
-```
+### `syntara_style_profile`
 
-Expected output: answer, sources, cited keys.
+Use for reusable writing style.
 
-Use for: resolving a subquestion after search, not for writing the whole chapter.
+- `action: "list"`: inspect profiles by `project` and optional `style_type`.
+- `action: "get"`: load a profile by `profile_id`, name, or `default: true`.
+- `action: "build"`: extract a profile from Syntara corpus ids, tag, or direct `content`.
+- `action: "save"`: save a Markdown + JSON profile extracted in the conversation.
+- `action: "update_from_revision"`: learn durable preferences from original vs user-revised text.
+- `action: "set_default"`: set a profile as project default.
 
-### `syntara_search_literature_grouped`
+For formal writing, load `profile_markdown` before outlining. Listing the profile is not enough.
 
-Purpose: search literature and return document-level hits with chunk indexes.
+### `syntara_citations`
 
-Input:
+Use after cite keys are stable.
 
-```json
-{
-  "zh_query": "中文检索词",
-  "en_query": "English query",
-  "top_k": 10,
-  "project": "optional project slug"
-}
-```
+- `action: "format"` with `content` and `style`.
+- `action: "export_bibtex"` with `cite_keys`.
 
-Expected output: literature records with cite keys, preview hit, and `hits[]` entries containing `chunk_index`, content, heading, page number, matched terms, and highlights.
+## Common Flows
 
-Use for: source gathering when the next step may need `syntara_get_chunk_context`.
+### Evidence-backed chapter
 
-### `syntara_get_chunk_context`
+1. `syntara_status` with `action: "project_summary"`.
+2. `syntara_style_profile` with `action: "get"` and `default: true`.
+3. `syntara_retrieve` with `mode: "literature_grouped"` for each claim cluster.
+4. `syntara_retrieve` with `mode: "chunk_context"` for important support.
+5. Draft in the writing skill, not as pasted RAG output.
+6. `syntara_citations` at the end.
 
-Purpose: expand a hit to surrounding context.
+### Import new academic sources
 
-Input:
+1. Local PDFs: `syntara_import` with `source_type: "literature_pdfs"`.
+2. PubMed: `syntara_external_search` with `provider: "pubmed"`, then `syntara_import` with `source_type: "pubmed"`.
+3. User notes or style samples: `syntara_import` with `source_type: "corpus_text"`.
 
-```json
-{
-  "lit_id": "literature id",
-  "chunk_index": 12
-}
-```
+### Build or update style
 
-Expected output: surrounding text and metadata.
-
-Use for: checking whether a snippet truly supports a claim.
-
-### `syntara_list_literature` / `syntara_list_corpus`
-
-Purpose: inspect available sources, tags, titles, or imported user corpus.
-
-Use for: choosing evidence scope and verifying whether the user's prior book corpus is present.
-
-### `syntara_import_corpus_text`
-
-Purpose: import text retrieved from WorkBuddy `资料库` / Tencent Docs into the Syntara local corpus and build local FTS/vector indexes.
-
-Input:
-
-```json
-{
-  "title": "document title",
-  "content": "markdown or plain text",
-  "description": "optional source note",
-  "tags": ["tencent-docs", "style-corpus"],
-  "project": "professional-book",
-  "source_url": "optional docs.qq.com URL",
-  "source_id": "optional file_id or node_id",
-  "dry_run": false
-}
-```
-
-Expected output: Syntara corpus id and title.
-
-Use for: turning cloud documents, user-prepared style corpus, or chapter notes into a reusable local Syntara corpus. Use `dry_run: true` when checking payload size or routing without writing.
-
-### `syntara_build_style_profile`
-
-Purpose: extract a reusable structured writing style profile from user corpus.
-
-Input:
-
-```json
-{
-  "name": "专业书章节风格",
-  "project": "professional-book",
-  "corpus_ids": ["optional corpus id"],
-  "tag": "optional corpus tag",
-  "content": "optional direct style corpus text",
-  "source_title": "optional source title",
-  "set_default": true
-}
-```
-
-Use for: turning prior chapters, Tencent Docs drafts, WorkBuddy knowledge-base text, or other user-owned prose into a reusable Syntara style asset.
-
-### `syntara_save_style_profile`
-
-Purpose: save an already extracted profile as a reusable Syntara asset.
-
-Use for: preserving a profile extracted by WorkBuddy when backend AI extraction is unavailable, or importing a hand-maintained Markdown style document.
-
-### `syntara_list_style_profiles` / `syntara_get_style_profile` / `syntara_set_default_style_profile`
-
-Purpose: discover, load, and bind reusable style profiles.
-
-Use for: resolving writing style before outlining. For formal writing, first call `syntara_get_style_profile` with `default: true` for the chosen project. If none exists, list profiles and use a clear match. If no profile exists, use the default de-AI pass and mention that a reusable profile can be created from style samples.
-
-### `syntara_search_pubmed`
-
-Purpose: search PubMed through Syntara and return candidate articles with PMIDs.
-
-Input:
-
-```json
-{
-  "query": "alveolar ridge augmentation dental implant",
-  "max_results": 20
-}
-```
-
-Use for: finding candidate PubMed records before importing. Show the user titles/authors/PMIDs when the match is ambiguous.
-
-### `syntara_import_pubmed`
-
-Purpose: import selected PubMed records into the Syntara literature library.
-
-Input:
-
-```json
-{
-  "pmids": ["12345678", "23456789"],
-  "project": "professional-book",
-  "dry_run": false
-}
-```
-
-Expected output: imported records with Syntara ids, cite keys, titles, and skipped duplicates.
-
-Use for: adding article metadata and abstracts as formal literature. These records can support citation keys, but may not contain full text unless Syntara later has the PDF/full text.
-
-### `syntara_import_literature_pdfs`
-
-Purpose: import local PDF files or folders into the Syntara literature library and start background extraction/indexing.
-
-Input:
-
-```json
-{
-  "file_paths": ["/absolute/path/paper.pdf"],
-  "folder_path": "/optional/folder/of/pdfs",
-  "recursive": false,
-  "project": "professional-book",
-  "dry_run": false
-}
-```
-
-Expected output: imported PDF records with Syntara ids and cite keys, plus any failed files.
-
-Use for: adding formal literature with full-text extraction. Prefer this for PDFs that should become citable RAG evidence. During import, Syntara may enrich metadata from DOI/CrossRef/PubMed when identifiers are detected.
-
-### `syntara_format_citations`
-
-Purpose: format inline citation keys or bibliography if exposed by the MCP server.
-
-Use for: final cleanup only after the draft's evidence markers are stable.
-
-## Calling Pattern
-
-1. Choose or infer the project area.
-2. Search broadly enough to find candidate sources, passing `project` when available.
-3. Open context for the most important hits.
-4. Ask RAG only narrow questions. If RAG/vector status is not ready, skip RAG and continue with grouped full-text search plus chunk context.
-5. If a cloud document should become durable local corpus, import it with `syntara_import_corpus_text`, then search it with `scope: "corpus"` or `scope: "all"`.
-6. If the user wants to add formal literature, use PDF/PDF-folder import for local files, PubMed search/import for PMIDs or queries, and any other available academic-source connector by the same literature-vs-corpus rule.
-7. Keep an evidence ledger outside the prose.
-8. Draft from the ledger, not directly from raw RAG output.
+1. `syntara_style_profile` with `action: "list"` and the inferred `style_type`.
+2. If no suitable profile exists, use `syntara-style-profiler`.
+3. The profiler calls `syntara_style_profile` with `action: "build"` or `action: "save"`.
+4. If learning from edits, it calls `action: "update_from_revision"`.

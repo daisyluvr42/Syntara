@@ -1,6 +1,6 @@
 # Syntara Style Profile JSON Schema
 
-Use this shape for `profile_json` when calling `syntara_save_style_profile`.
+Use this shape for `profile_json` when calling `syntara_style_profile` with `action: "save"`.
 
 ```json
 {

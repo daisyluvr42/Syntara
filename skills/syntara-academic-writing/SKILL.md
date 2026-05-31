@@ -25,7 +25,7 @@ Before drafting a full chapter:
 3. Open context for the most important hits when a claim depends on a specific source.
 4. Keep an evidence ledger with cite keys or source ids.
 
-If `search_ready_vector: false`, do not treat Syntara as unavailable. Continue with keyword/full-text tools such as `syntara_search`, `syntara_search_literature_grouped`, and `syntara_get_chunk_context`. State that vector RAG is not ready only if relevant. Do not skip retrieval and do not draft from clinical common sense alone.
+If `search_ready_vector: false`, do not treat Syntara as unavailable. Continue with `syntara_retrieve` using `mode: "search"`, `mode: "literature_grouped"`, and `mode: "chunk_context"`. State that vector RAG is not ready only if relevant. Do not skip retrieval and do not draft from clinical common sense alone.
 
 If no Syntara evidence is found for a strong factual, comparative, numerical, causal, or recommendation-like claim, either soften the claim or put it under `待补证据`.
 
@@ -57,7 +57,7 @@ If one of topic, title, or style corpus is missing, ask a concise follow-up befo
 
 5. Use WorkBuddy `资料库` / Tencent Docs material as cloud corpus when available. Treat it as user-owned style, outline, notes, and draft context; do not treat it as peer-reviewed literature unless the document itself contains traceable citations. For details, read `references/tencent-docs-corpus.md`.
 
-6. If the user wants to add materials to Syntara, classify them first. Import local PDFs, PDF folders, PubMed PMIDs/search results, and other formal academic source documents into the Syntara literature library when the tool supports them. Import WorkBuddy `资料库` / Tencent Docs notes, drafts, and style samples into Syntara corpus with `syntara_import_corpus_text`. Pass `project` so the material lands in the right project area. See `references/syntara-mcp-tools.md` and `references/tencent-docs-corpus.md`.
+6. If the user wants to add materials to Syntara, classify them first. Import local PDFs, PDF folders, PubMed PMIDs/search results, and other formal academic source documents into the Syntara literature library when the tool supports them. Import WorkBuddy `资料库` / Tencent Docs notes, drafts, and style samples into Syntara corpus with `syntara_import` using `source_type: "corpus_text"`. Pass `project` so the material lands in the right project area. See `references/syntara-mcp-tools.md` and `references/tencent-docs-corpus.md`.
 
 7. Create an evidence ledger before drafting. For each section, keep the claim, supporting source keys, useful quotations or paraphrases, and unresolved gaps.
 

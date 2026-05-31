@@ -6,12 +6,12 @@ Use this reference when the user provides prior professional-book chapters or se
 
 For formal chapter writing, first look for a Syntara style profile:
 
-1. Call `syntara_list_style_profiles` with the current `project` and `style_type: "professional-book"` if available.
-2. If no type-specific profile exists, call `syntara_get_style_profile` with the current `project` and `default: true`.
-3. If no default exists, call `syntara_list_style_profiles` for the project.
+1. Call `syntara_style_profile` with `action: "list"`, the current `project`, and `style_type: "professional-book"` if available.
+2. If no type-specific profile exists, call `syntara_style_profile` with `action: "get"`, the current `project`, and `default: true`.
+3. If no default exists, call `syntara_style_profile` with `action: "list"` for the project.
 4. If no suitable profile exists, look for professional-book style samples in the current corpus or connected knowledge base. Likely labels include `style-corpus`, `书稿`, `章节`, `旧章节`, `专业书`, `草稿`, or `voice`.
 5. If exactly one obvious style source is found, use `syntara-style-profiler` to build and save a `professional-book` Markdown + JSON project default profile before outlining. If several candidates are found, ask the user to choose.
-6. If the user provides style corpus and no suitable profile exists, run the `syntara-style-profiler` workflow before outlining. It may call `syntara_build_style_profile`, or extract in the conversation and save with `syntara_save_style_profile` when backend AI is unavailable.
+6. If the user provides style corpus and no suitable profile exists, run the `syntara-style-profiler` workflow before outlining. It may call `syntara_style_profile` with `action: "build"`, or extract in the conversation and save with `action: "save"` when backend AI is unavailable.
 7. Apply the returned profile as the style brief.
 
 Only do ad hoc style extraction inside the conversation when MCP style tools are unavailable, and still save a non-empty Markdown + JSON profile once saving is possible.

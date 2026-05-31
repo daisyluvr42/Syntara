@@ -46,17 +46,17 @@ Treat style as a separate decision from evidence. A document can be used as fact
 For formal writing, check Syntara style profiles before defaulting:
 
 1. Infer `style_type` from the requested output: `wechat-longform`, `professional-book`, `literature-review`, `tutorial`, `report`, `script`, `ppt`, or `general`.
-2. Use `syntara_list_style_profiles` with the inferred project and `style_type` when available. In WorkBuddy custom MCP, the visible name may be `syntara_syntara_list_style_profiles`.
-3. If no type-specific profile is found, use `syntara_get_style_profile` with `default: true` for the inferred project.
-4. If not found, use `syntara_list_style_profiles` without a project filter and choose a clear single/default match.
-5. After choosing a listed profile, call `syntara_get_style_profile` for its id. Do not draft from the list summary alone.
+2. Use `syntara_style_profile` with `action: "list"`, the inferred project, and `style_type` when available.
+3. If no type-specific profile is found, use `syntara_style_profile` with `action: "get"` and `default: true` for the inferred project.
+4. If not found, use `syntara_style_profile` with `action: "list"` without a project filter and choose a clear single/default match.
+5. After choosing a listed profile, call `syntara_style_profile` with `action: "get"` for its id. Do not draft from the list summary alone.
 6. If no profile exists, run first-use style setup:
    - Search the available user-owned corpus or connected knowledge base for likely style samples: `style-corpus`, `style`, `风格`, `旧文`, `往期文章`, `代表作`, `书稿`, `章节`, `公众号`, `草稿`, `voice`.
    - If the style corpus contains different genres or writing types, group by style type and build separate profiles.
    - If exactly one obvious style source is found, use `syntara-style-profiler` to extract and save a Markdown + JSON project default profile with the inferred `style_type`.
    - If multiple candidates are found, ask the user to choose.
    - If none are found, continue only with `default_de_ai` unless the user asked for their own voice, in which case ask for 2-5 representative drafts or a folder/document location.
-7. If the task includes style corpus, route style extraction through `syntara-style-profiler`; it should save a normalized profile with `syntara_build_style_profile` or `syntara_save_style_profile`.
+7. If the task includes style corpus, route style extraction through `syntara-style-profiler`; it should save a normalized profile with `syntara_style_profile` using `action: "build"` or `action: "save"`.
 8. If no profile exists and the user wants to continue, keep writing with `default_de_ai` and state that this is not the user's personal voice.
 
 Before drafting, choose one style mode:

@@ -19,338 +19,151 @@ import httpx
 
 BASE_URL = os.getenv("SYNTARA_BASE_URL", "http://127.0.0.1:8888").rstrip("/")
 TIMEOUT = float(os.getenv("SYNTARA_MCP_TIMEOUT", "60"))
+STYLE_TIMEOUT = float(os.getenv("SYNTARA_MCP_STYLE_TIMEOUT", "180"))
 AUTO_START = os.getenv("SYNTARA_MCP_AUTO_START", "1") != "0"
 BASE_DIR = Path(__file__).resolve().parents[1]
 BACKEND_PROCESS: subprocess.Popen | None = None
 MESSAGE_MODE = "headers"
 
 
-TOOLS: list[dict[str, Any]] = [
+AGGREGATE_TOOLS: list[dict[str, Any]] = [
     {
-        "name": "syntara_health",
-        "description": "Check Syntara backend health and library counts.",
-        "inputSchema": {"type": "object", "properties": {}},
-    },
-    {
-        "name": "syntara_list_projects",
-        "description": "List Syntara project areas backed by project:<slug> tags.",
-        "inputSchema": {"type": "object", "properties": {}},
-    },
-    {
-        "name": "syntara_project_summary",
-        "description": "Return counts for one Syntara project area.",
+        "name": "syntara_status",
+        "description": "Check Syntara health and project status. Use action health, list_projects, or project_summary.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "project": {"type": "string", "description": "Project slug such as professional-book."},
+                "action": {"type": "string", "enum": ["health", "list_projects", "project_summary"], "default": "health"},
+                "project": {"type": "string", "description": "Required for project_summary."},
             },
-            "required": ["project"],
         },
     },
     {
-        "name": "syntara_search",
-        "description": "Search Syntara literature and/or user corpus with hybrid retrieval.",
+        "name": "syntara_retrieve",
+        "description": "Retrieve evidence from Syntara. Use for search, RAG answers, grouped literature search, or chunk context.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "Search query."},
-                "scope": {
-                    "type": "string",
-                    "enum": ["all", "literature", "corpus"],
-                    "default": "all",
-                },
+                "mode": {"type": "string", "enum": ["search", "rag_answer", "literature_grouped", "chunk_context"], "default": "search"},
+                "query": {"type": "string", "description": "Search query for search mode."},
+                "question": {"type": "string", "description": "Bounded question for rag_answer mode."},
+                "scope": {"type": "string", "enum": ["all", "literature", "corpus"], "default": "all"},
+                "search_scope": {"type": "string", "enum": ["all", "literature", "corpus"], "default": "all"},
+                "zh_query": {"type": "string", "description": "Chinese query for literature_grouped mode."},
+                "en_query": {"type": "string", "description": "English query for literature_grouped mode."},
+                "lit_id": {"type": "string", "description": "Literature id for chunk_context mode."},
+                "chunk_index": {"type": "integer", "description": "Chunk index for chunk_context mode."},
                 "top_k": {"type": "integer", "default": 10, "minimum": 1, "maximum": 50},
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
-            },
-            "required": ["query"],
-        },
-    },
-    {
-        "name": "syntara_rag_answer",
-        "description": "Answer one bounded question using Syntara RAG and return sources/cite keys.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "question": {"type": "string", "description": "A narrow question to answer."},
-                "search_scope": {
-                    "type": "string",
-                    "enum": ["all", "literature", "corpus"],
-                    "default": "all",
-                },
-                "top_k": {"type": "integer", "default": 5, "minimum": 1, "maximum": 20},
                 "use_tree": {"type": "boolean", "default": True},
-                "provider_id": {"type": "string", "description": "Optional Syntara AI provider id."},
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
-            },
-            "required": ["question"],
-        },
-    },
-    {
-        "name": "syntara_search_literature_grouped",
-        "description": "Search literature and return document-level results with chunk indexes for context expansion.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "zh_query": {"type": "string", "description": "Chinese search query."},
-                "en_query": {"type": "string", "description": "English search query."},
-                "top_k": {"type": "integer", "default": 10, "minimum": 1, "maximum": 50},
-                "provider_id": {"type": "string", "description": "Optional Syntara AI provider id for query translation."},
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
+                "provider_id": {"type": "string"},
+                "project": {"type": "string"},
             },
         },
     },
     {
-        "name": "syntara_get_chunk_context",
-        "description": "Return surrounding context for a Syntara literature chunk.",
+        "name": "syntara_sources",
+        "description": "List Syntara source inventory. Use source_type literature or corpus.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "lit_id": {"type": "string", "description": "Literature id from search results."},
-                "chunk_index": {"type": "integer", "description": "Chunk index from search results."},
-            },
-            "required": ["lit_id", "chunk_index"],
-        },
-    },
-    {
-        "name": "syntara_list_literature",
-        "description": "List Syntara literature records and citation metadata.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
+                "source_type": {"type": "string", "enum": ["literature", "corpus"], "default": "literature"},
                 "skip": {"type": "integer", "default": 0, "minimum": 0},
                 "limit": {"type": "integer", "default": 20, "minimum": 1, "maximum": 100},
                 "tag": {"type": "string"},
-                "sort_by": {
-                    "type": "string",
-                    "enum": ["title", "year", "created_at", "updated_at", "imported_at", "cite_key"],
-                    "default": "updated_at",
-                },
+                "sort_by": {"type": "string", "enum": ["title", "year", "created_at", "updated_at", "imported_at", "cite_key"], "default": "updated_at"},
                 "order": {"type": "string", "enum": ["asc", "desc"], "default": "desc"},
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
+                "project": {"type": "string"},
             },
         },
     },
     {
-        "name": "syntara_list_corpus",
-        "description": "List user-imported Syntara corpus entries such as prior book chapters.",
+        "name": "syntara_import",
+        "description": "Import sources into Syntara. Use source_type corpus_text, literature_pdfs, or pubmed.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "skip": {"type": "integer", "default": 0, "minimum": 0},
-                "limit": {"type": "integer", "default": 20, "minimum": 1, "maximum": 100},
-                "tag": {"type": "string"},
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
-            },
-        },
-    },
-    {
-        "name": "syntara_import_corpus_text",
-        "description": "Import text from WorkBuddy/Tencent Docs into Syntara corpus and build local FTS/vector indexes.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "title": {"type": "string", "description": "Corpus title."},
-                "content": {"type": "string", "description": "Markdown or plain text content to import."},
-                "description": {"type": "string", "description": "Optional description."},
-                "tags": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Optional tags such as style-corpus, tencent-docs, chapter-notes.",
-                },
-                "source_url": {"type": "string", "description": "Optional Tencent Docs URL."},
-                "source_id": {"type": "string", "description": "Optional Tencent Docs file_id/node_id."},
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
+                "source_type": {"type": "string", "enum": ["corpus_text", "literature_pdfs", "pubmed"]},
+                "title": {"type": "string"},
+                "content": {"type": "string"},
+                "description": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "source_url": {"type": "string"},
+                "source_id": {"type": "string"},
+                "file_paths": {"type": "array", "items": {"type": "string"}},
+                "folder_path": {"type": "string"},
+                "recursive": {"type": "boolean", "default": False},
+                "pmids": {"type": "array", "items": {"type": "string"}},
+                "project": {"type": "string"},
                 "dry_run": {"type": "boolean", "default": False},
             },
-            "required": ["title", "content"],
+            "required": ["source_type"],
         },
     },
     {
-        "name": "syntara_build_style_profile",
-        "description": "Extract a reusable structured writing style profile from resolved user-owned corpus text or imported Syntara corpus entries. If the user gave an explicit path or file list, pass only content from that boundary.",
+        "name": "syntara_style_profile",
+        "description": "List, get, build, save, update, or set default Syntara style profiles.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "name": {"type": "string", "description": "Style profile name, such as 公众号长文风格."},
-                "project": {"type": "string", "description": "Project slug to attach the style profile to.", "default": "default"},
-                "style_type": {"type": "string", "description": "Optional writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt."},
-                "corpus_ids": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Optional Syntara corpus ids to use as style examples.",
-                },
-                "tag": {"type": "string", "description": "Optional corpus tag to collect style examples from. Use only when the tag represents the resolved style corpus."},
-                "content": {"type": "string", "description": "Optional direct style corpus content from WorkBuddy/ima/Tencent Docs or a user-specified file/folder boundary."},
-                "source_title": {"type": "string", "description": "Title, path, or corpus label for direct style corpus content."},
-                "provider_id": {"type": "string", "description": "Optional Syntara AI provider id."},
-                "set_default": {"type": "boolean", "default": True},
-            },
-            "required": ["name"],
-        },
-    },
-    {
-        "name": "syntara_update_style_profile_from_revision",
-        "description": "Update a reusable Syntara style profile by comparing an AI/generated draft with the user's revised version and merging learned revision preferences into the profile.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "original_text": {"type": "string", "description": "The draft before the user edited it."},
-                "revised_text": {"type": "string", "description": "The user's edited/final version."},
-                "base_profile_id": {"type": "string", "description": "Optional existing Syntara style profile id to update."},
-                "name": {"type": "string", "description": "Optional profile name. Defaults to the existing profile name."},
-                "project": {"type": "string", "description": "Project slug.", "default": "default"},
-                "style_type": {"type": "string", "description": "Optional writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt."},
-                "source_title": {"type": "string", "description": "Optional title for this revision pair."},
-                "provider_id": {"type": "string", "description": "Optional Syntara AI provider id."},
-                "set_default": {"type": "boolean", "default": True},
-            },
-            "required": ["original_text", "revised_text"],
-        },
-    },
-    {
-        "name": "syntara_list_style_profiles",
-        "description": "List reusable Syntara writing style profiles, optionally scoped to one project.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "project": {"type": "string", "description": "Optional project slug."},
-                "style_type": {"type": "string", "description": "Optional writing type filter."},
-            },
-        },
-    },
-    {
-        "name": "syntara_save_style_profile",
-        "description": "Save an already extracted style profile into Syntara and optionally set it as project default.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "name": {"type": "string", "description": "Style profile name."},
-                "project": {"type": "string", "description": "Project slug.", "default": "default"},
-                "style_type": {"type": "string", "description": "Optional writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt."},
-                "profile_json": {"type": "object", "description": "Optional structured profile JSON, preferably using syntara.style_profile.v1 source/evidence fields."},
-                "profile_markdown": {"type": "string", "description": "Human-readable style profile markdown."},
-                "source_corpus_ids": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Optional Syntara corpus ids used to create the profile.",
-                },
-                "tags": {"type": "array", "items": {"type": "string"}},
-                "set_default": {"type": "boolean", "default": True},
-            },
-            "required": ["name", "profile_markdown"],
-        },
-    },
-    {
-        "name": "syntara_get_style_profile",
-        "description": "Get a Syntara style profile by id, by project/name, or the default profile for a project.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "profile_id": {"type": "string"},
-                "project": {"type": "string", "description": "Project slug.", "default": "default"},
-                "name": {"type": "string", "description": "Style profile name."},
-                "default": {"type": "boolean", "default": False},
-            },
-        },
-    },
-    {
-        "name": "syntara_set_default_style_profile",
-        "description": "Set one Syntara style profile as the default for its project.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "profile_id": {"type": "string"},
-                "project": {"type": "string"},
+                "action": {"type": "string", "enum": ["list", "get", "build", "save", "update_from_revision", "set_default"]},
                 "name": {"type": "string"},
+                "project": {"type": "string", "default": "default"},
+                "style_type": {"type": "string"},
+                "profile_id": {"type": "string"},
+                "default": {"type": "boolean", "default": False},
+                "corpus_ids": {"type": "array", "items": {"type": "string"}},
+                "tag": {"type": "string"},
+                "content": {"type": "string", "description": "Direct style corpus content from a resolved user-owned boundary."},
+                "source_title": {"type": "string"},
+                "profile_json": {"type": "object"},
+                "profile_markdown": {"type": "string"},
+                "source_corpus_ids": {"type": "array", "items": {"type": "string"}},
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "original_text": {"type": "string"},
+                "revised_text": {"type": "string"},
+                "base_profile_id": {"type": "string"},
+                "provider_id": {"type": "string"},
+                "set_default": {"type": "boolean", "default": True},
             },
+            "required": ["action"],
         },
     },
     {
-        "name": "syntara_search_pubmed",
-        "description": "Search PubMed from Syntara and return candidate PMIDs for literature import.",
+        "name": "syntara_external_search",
+        "description": "Search external academic/source databases before importing into Syntara. Currently supports provider pubmed.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "PubMed search query."},
+                "provider": {"type": "string", "enum": ["pubmed"], "default": "pubmed"},
+                "query": {"type": "string"},
                 "max_results": {"type": "integer", "default": 20, "minimum": 1, "maximum": 100},
             },
             "required": ["query"],
         },
     },
     {
-        "name": "syntara_import_pubmed",
-        "description": "Import selected PubMed PMIDs into the Syntara literature library.",
+        "name": "syntara_citations",
+        "description": "Format citations in text or export BibTeX.",
         "inputSchema": {
             "type": "object",
             "properties": {
-                "pmids": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "PubMed IDs to import.",
-                },
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
-                "dry_run": {"type": "boolean", "default": False},
+                "action": {"type": "string", "enum": ["format", "export_bibtex"]},
+                "content": {"type": "string"},
+                "style": {"type": "string", "enum": ["vancouver", "apa", "gb-t-7714"], "default": "vancouver"},
+                "cite_keys": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["pmids"],
-        },
-    },
-    {
-        "name": "syntara_import_literature_pdfs",
-        "description": "Import local PDF files into the Syntara literature library and start extraction/indexing.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "file_paths": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Absolute or home-relative paths to PDF files.",
-                },
-                "folder_path": {
-                    "type": "string",
-                    "description": "Optional folder containing PDFs to import.",
-                },
-                "recursive": {"type": "boolean", "default": False},
-                "project": {"type": "string", "description": "Optional Syntara project slug."},
-                "dry_run": {"type": "boolean", "default": False},
-            },
-        },
-    },
-    {
-        "name": "syntara_format_citations",
-        "description": "Format [@citekey] markers in draft text through Syntara citation formatting.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "content": {"type": "string", "description": "Draft text containing [@citekey] markers."},
-                "style": {
-                    "type": "string",
-                    "enum": ["vancouver", "apa", "gb-t-7714"],
-                    "default": "vancouver",
-                },
-            },
-            "required": ["content"],
-        },
-    },
-    {
-        "name": "syntara_export_bibtex",
-        "description": "Export BibTeX for selected cite keys, or all references if omitted.",
-        "inputSchema": {
-            "type": "object",
-            "properties": {
-                "cite_keys": {
-                    "type": "array",
-                    "items": {"type": "string"},
-                    "description": "Optional cite keys to export.",
-                }
-            },
+            "required": ["action"],
         },
     },
 ]
 
 
-async def http_request(method: str, path: str, **kwargs: Any) -> Any:
+TOOLS = AGGREGATE_TOOLS
+
+
+async def http_request(method: str, path: str, timeout: float | None = None, **kwargs: Any) -> Any:
     ensure_backend()
-    async with httpx.AsyncClient(base_url=BASE_URL, timeout=TIMEOUT) as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, timeout=timeout or TIMEOUT) as client:
         response = await client.request(method, path, **kwargs)
         response.raise_for_status()
         content_type = response.headers.get("content-type", "")
@@ -366,107 +179,164 @@ def clean_args(arguments: dict[str, Any] | None) -> dict[str, Any]:
 async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
     args = clean_args(arguments)
 
-    if name == "syntara_health":
-        return await http_request("GET", "/api/health")
+    if name == "syntara_status":
+        action = args.get("action", "health")
+        if action == "health":
+            return await http_request("GET", "/api/health")
+        if action == "list_projects":
+            return await http_request("GET", "/api/projects")
+        if action == "project_summary":
+            return await http_request("GET", f"/api/projects/{project_slug(args['project'])}")
 
-    if name == "syntara_list_projects":
-        return await http_request("GET", "/api/projects")
+    if name == "syntara_retrieve":
+        mode = args.get("mode", "search")
+        if mode == "search":
+            payload = {"query": args["query"], "scope": args.get("scope", "all"), "top_k": args.get("top_k", 10)}
+            if args.get("project"):
+                payload["project"] = project_slug(args["project"])
+            return await http_request("POST", "/api/search", json=payload)
+        if mode == "rag_answer":
+            payload = {
+                "question": args["question"],
+                "search_scope": args.get("search_scope", args.get("scope", "all")),
+                "top_k": args.get("top_k", 5),
+                "use_tree": args.get("use_tree", True),
+            }
+            if args.get("provider_id"):
+                payload["provider_id"] = args["provider_id"]
+            if args.get("project"):
+                payload["project"] = project_slug(args["project"])
+            return await http_request("POST", "/api/ai/rag", json=payload, timeout=STYLE_TIMEOUT)
+        if mode == "literature_grouped":
+            payload = {"zh_query": args.get("zh_query", ""), "en_query": args.get("en_query", ""), "top_k": args.get("top_k", 10)}
+            if args.get("provider_id"):
+                payload["provider_id"] = args["provider_id"]
+            if args.get("project"):
+                payload["project"] = project_slug(args["project"])
+            return await http_request("POST", "/api/search/literature-grouped", json=payload, timeout=STYLE_TIMEOUT)
+        if mode == "chunk_context":
+            payload = {"lit_id": args["lit_id"], "chunk_index": args["chunk_index"]}
+            return await http_request("POST", "/api/search/chunk-context", json=payload)
 
-    if name == "syntara_project_summary":
-        return await http_request("GET", f"/api/projects/{project_slug(args['project'])}")
-
-    if name == "syntara_search":
-        payload = {
-            "query": args["query"],
-            "scope": args.get("scope", "all"),
-            "top_k": args.get("top_k", 10),
-        }
-        if args.get("project"):
-            payload["project"] = project_slug(args["project"])
-        return await http_request("POST", "/api/search", json=payload)
-
-    if name == "syntara_rag_answer":
-        payload = {
-            "question": args["question"],
-            "search_scope": args.get("search_scope", "all"),
-            "top_k": args.get("top_k", 5),
-            "use_tree": args.get("use_tree", True),
-        }
-        if args.get("provider_id"):
-            payload["provider_id"] = args["provider_id"]
-        if args.get("project"):
-            payload["project"] = project_slug(args["project"])
-        return await http_request("POST", "/api/ai/rag", json=payload)
-
-    if name == "syntara_search_literature_grouped":
-        payload = {
-            "zh_query": args.get("zh_query", ""),
-            "en_query": args.get("en_query", ""),
-            "top_k": args.get("top_k", 10),
-        }
-        if args.get("provider_id"):
-            payload["provider_id"] = args["provider_id"]
-        if args.get("project"):
-            payload["project"] = project_slug(args["project"])
-        return await http_request("POST", "/api/search/literature-grouped", json=payload)
-
-    if name == "syntara_get_chunk_context":
-        payload = {"lit_id": args["lit_id"], "chunk_index": args["chunk_index"]}
-        return await http_request("POST", "/api/search/chunk-context", json=payload)
-
-    if name == "syntara_list_literature":
-        params = {
-            "skip": args.get("skip", 0),
-            "limit": args.get("limit", 20),
-            "sort_by": args.get("sort_by", "updated_at"),
-            "order": args.get("order", "desc"),
-        }
-        if args.get("tag"):
-            params["tag"] = args["tag"]
-        if args.get("project"):
-            params["tag"] = project_tag(args["project"])
-        return await http_request("GET", "/api/literature", params=params)
-
-    if name == "syntara_list_corpus":
+    if name == "syntara_sources":
         params = {"skip": args.get("skip", 0), "limit": args.get("limit", 20)}
         if args.get("tag"):
             params["tag"] = args["tag"]
         if args.get("project"):
             params["tag"] = project_tag(args["project"])
-        return await http_request("GET", "/api/corpus", params=params)
+        if args.get("source_type", "literature") == "corpus":
+            return await http_request("GET", "/api/corpus", params=params)
+        params["sort_by"] = args.get("sort_by", "updated_at")
+        params["order"] = args.get("order", "desc")
+        return await http_request("GET", "/api/literature", params=params)
 
-    if name == "syntara_import_corpus_text":
-        title = args["title"].strip()
-        content = args["content"]
-        tags = args.get("tags") or []
+    if name == "syntara_import":
+        source_type = args["source_type"]
+        if source_type == "corpus_text":
+            return await import_corpus_text(args)
+        if source_type == "pubmed":
+            return await import_pubmed(args)
+        if source_type == "literature_pdfs":
+            return await import_literature_pdfs(args)
+
+    if name == "syntara_style_profile":
+        return await style_profile_action(args)
+
+    if name == "syntara_external_search":
+        provider = args.get("provider", "pubmed")
+        if provider == "pubmed":
+            params = {"query": args["query"], "max_results": args.get("max_results", 20)}
+            return await http_request("GET", "/api/pubmed/search", params=params)
+
+    if name == "syntara_citations":
+        action = args["action"]
+        if action == "format":
+            payload = {"content": args["content"], "style": args.get("style", "vancouver")}
+            return await http_request("POST", "/api/documents/format-citations", json=payload)
+        if action == "export_bibtex":
+            cite_keys = ",".join(args.get("cite_keys") or [])
+            return await http_request("GET", "/api/export/bibtex", params={"cite_keys": cite_keys})
+
+    raise ValueError(f"Unknown tool: {name}")
+
+
+async def import_corpus_text(args: dict[str, Any]) -> Any:
+    title = args["title"].strip()
+    content = args["content"]
+    tags = args.get("tags") or []
+    if args.get("project"):
+        tags = ensure_tag(tags, project_tag(args["project"]))
+    description_parts = []
+    if args.get("description"):
+        description_parts.append(args["description"].strip())
+    if args.get("source_url"):
+        description_parts.append(f"Source URL: {args['source_url']}")
+    if args.get("source_id"):
+        description_parts.append(f"Source ID: {args['source_id']}")
+    description = "\n".join(part for part in description_parts if part)
+    filename = safe_filename(title) + ".md"
+    if args.get("dry_run"):
+        return {"ok": True, "dry_run": True, "title": title, "filename": filename, "characters": len(content), "tags": tags}
+    files = {"file": (filename, content.encode("utf-8"), "text/markdown")}
+    data = {"title": title, "description": description, "tags": ",".join(tags)}
+    return await http_request("POST", "/api/corpus/upload", data=data, files=files)
+
+
+async def import_pubmed(args: dict[str, Any]) -> Any:
+    pmids = [str(pmid).strip() for pmid in args["pmids"] if str(pmid).strip()]
+    if args.get("dry_run"):
+        return {"ok": True, "dry_run": True, "pmids": pmids, "count": len(pmids)}
+    result = await http_request("POST", "/api/pubmed/import", json=pmids, timeout=STYLE_TIMEOUT)
+    if args.get("project"):
+        await tag_literature_results(result.get("imported", []), project_tag(args["project"]))
+    return result
+
+
+async def import_literature_pdfs(args: dict[str, Any]) -> Any:
+    pdf_paths = collect_pdf_paths(args)
+    if args.get("dry_run"):
+        return {"ok": True, "dry_run": True, "files": [str(path) for path in pdf_paths], "count": len(pdf_paths)}
+
+    imported = []
+    failed = []
+    for path in pdf_paths:
+        try:
+            files = {"file": (path.name, path.read_bytes(), "application/pdf")}
+            result = await http_request("POST", "/api/literature/import/pdf", files=files, timeout=STYLE_TIMEOUT)
+            if args.get("project"):
+                await tag_literature_results([result], project_tag(args["project"]))
+            imported.append({"file": str(path), "result": result})
+        except httpx.HTTPStatusError as exc:
+            failed.append({"file": str(path), "error": f"HTTP {exc.response.status_code}: {exc.response.text}"})
+        except Exception as exc:
+            failed.append({"file": str(path), "error": str(exc)})
+    return {"imported": imported, "failed": failed}
+
+
+async def style_profile_action(args: dict[str, Any]) -> Any:
+    action = args["action"]
+    project = project_slug(args.get("project", "default"))
+    if action == "list":
+        params = {}
         if args.get("project"):
-            tags = ensure_tag(tags, project_tag(args["project"]))
-        description_parts = []
-        if args.get("description"):
-            description_parts.append(args["description"].strip())
-        if args.get("source_url"):
-            description_parts.append(f"Source URL: {args['source_url']}")
-        if args.get("source_id"):
-            description_parts.append(f"Source ID: {args['source_id']}")
-        description = "\n".join(part for part in description_parts if part)
-        filename = safe_filename(title) + ".md"
-        if args.get("dry_run"):
-            return {
-                "ok": True,
-                "dry_run": True,
-                "title": title,
-                "filename": filename,
-                "characters": len(content),
-                "tags": tags,
-            }
-        files = {"file": (filename, content.encode("utf-8"), "text/markdown")}
-        data = {"title": title, "description": description, "tags": ",".join(tags)}
-        return await http_request("POST", "/api/corpus/upload", data=data, files=files)
-
-    if name == "syntara_build_style_profile":
+            params["project"] = project
+        if args.get("style_type"):
+            params["style_type"] = args["style_type"]
+        return await http_request("GET", "/api/style-profiles", params=params)
+    if action == "get":
+        if args.get("profile_id"):
+            return await http_request("GET", f"/api/style-profiles/{args['profile_id']}")
+        if args.get("default", False) or not args.get("name"):
+            return await http_request("GET", "/api/style-profiles/default", params={"project": project})
+        profiles = await http_request("GET", "/api/style-profiles", params={"project": project})
+        for item in profiles.get("items", []):
+            if item.get("name") == args["name"]:
+                return await http_request("GET", f"/api/style-profiles/{item['id']}")
+        raise ValueError("Style profile not found")
+    if action == "build":
         payload = {
             "name": args["name"],
-            "project": project_slug(args.get("project", "default")),
+            "project": project,
             "style_type": args.get("style_type"),
             "corpus_ids": args.get("corpus_ids") or [],
             "set_default": args.get("set_default", True),
@@ -474,32 +344,11 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
         for key in ("tag", "content", "source_title", "provider_id"):
             if args.get(key):
                 payload[key] = args[key]
-        return await http_request("POST", "/api/style-profiles/build", json=payload)
-
-    if name == "syntara_update_style_profile_from_revision":
-        payload = {
-            "original_text": args["original_text"],
-            "revised_text": args["revised_text"],
-            "project": project_slug(args.get("project", "default")),
-            "set_default": args.get("set_default", True),
-        }
-        for key in ("base_profile_id", "name", "style_type", "source_title", "provider_id"):
-            if args.get(key):
-                payload[key] = args[key]
-        return await http_request("POST", "/api/style-profiles/revision", json=payload)
-
-    if name == "syntara_list_style_profiles":
-        params = {}
-        if args.get("project"):
-            params["project"] = project_slug(args["project"])
-        if args.get("style_type"):
-            params["style_type"] = args["style_type"]
-        return await http_request("GET", "/api/style-profiles", params=params)
-
-    if name == "syntara_save_style_profile":
+        return await http_request("POST", "/api/style-profiles/build", json=payload, timeout=STYLE_TIMEOUT)
+    if action == "save":
         payload = {
             "name": args["name"],
-            "project": project_slug(args.get("project", "default")),
+            "project": project,
             "style_type": args.get("style_type"),
             "profile_json": args.get("profile_json") or {},
             "profile_markdown": args["profile_markdown"],
@@ -508,76 +357,26 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
             "set_default": args.get("set_default", True),
         }
         return await http_request("POST", "/api/style-profiles", json=payload)
-
-    if name == "syntara_get_style_profile":
-        if args.get("profile_id"):
-            return await http_request("GET", f"/api/style-profiles/{args['profile_id']}")
-        project = project_slug(args.get("project", "default"))
-        if args.get("default", False) or not args.get("name"):
-            return await http_request("GET", "/api/style-profiles/default", params={"project": project})
-        profiles = await http_request("GET", "/api/style-profiles", params={"project": project})
-        for item in profiles.get("items", []):
-            if item.get("name") == args["name"]:
-                return await http_request("GET", f"/api/style-profiles/{item['id']}")
-        raise ValueError("Style profile not found")
-
-    if name == "syntara_set_default_style_profile":
+    if action == "update_from_revision":
+        payload = {
+            "original_text": args["original_text"],
+            "revised_text": args["revised_text"],
+            "project": project,
+            "set_default": args.get("set_default", True),
+        }
+        for key in ("base_profile_id", "name", "style_type", "source_title", "provider_id"):
+            if args.get(key):
+                payload[key] = args[key]
+        return await http_request("POST", "/api/style-profiles/revision", json=payload, timeout=STYLE_TIMEOUT)
+    if action == "set_default":
         if args.get("profile_id"):
             return await http_request("PUT", f"/api/style-profiles/{args['profile_id']}/default")
-        project = project_slug(args.get("project", "default"))
         profiles = await http_request("GET", "/api/style-profiles", params={"project": project})
         for item in profiles.get("items", []):
             if item.get("name") == args.get("name"):
                 return await http_request("PUT", f"/api/style-profiles/{item['id']}/default")
         raise ValueError("Style profile not found")
-
-    if name == "syntara_search_pubmed":
-        params = {"query": args["query"], "max_results": args.get("max_results", 20)}
-        return await http_request("GET", "/api/pubmed/search", params=params)
-
-    if name == "syntara_import_pubmed":
-        pmids = [str(pmid).strip() for pmid in args["pmids"] if str(pmid).strip()]
-        if args.get("dry_run"):
-            return {"ok": True, "dry_run": True, "pmids": pmids, "count": len(pmids)}
-        result = await http_request("POST", "/api/pubmed/import", json=pmids)
-        if args.get("project"):
-            await tag_literature_results(result.get("imported", []), project_tag(args["project"]))
-        return result
-
-    if name == "syntara_import_literature_pdfs":
-        pdf_paths = collect_pdf_paths(args)
-        if args.get("dry_run"):
-            return {
-                "ok": True,
-                "dry_run": True,
-                "files": [str(path) for path in pdf_paths],
-                "count": len(pdf_paths),
-            }
-
-        imported = []
-        failed = []
-        for path in pdf_paths:
-            try:
-                files = {"file": (path.name, path.read_bytes(), "application/pdf")}
-                result = await http_request("POST", "/api/literature/import/pdf", files=files)
-                if args.get("project"):
-                    await tag_literature_results([result], project_tag(args["project"]))
-                imported.append({"file": str(path), "result": result})
-            except httpx.HTTPStatusError as exc:
-                failed.append({"file": str(path), "error": f"HTTP {exc.response.status_code}: {exc.response.text}"})
-            except Exception as exc:
-                failed.append({"file": str(path), "error": str(exc)})
-        return {"imported": imported, "failed": failed}
-
-    if name == "syntara_format_citations":
-        payload = {"content": args["content"], "style": args.get("style", "vancouver")}
-        return await http_request("POST", "/api/documents/format-citations", json=payload)
-
-    if name == "syntara_export_bibtex":
-        cite_keys = ",".join(args.get("cite_keys") or [])
-        return await http_request("GET", "/api/export/bibtex", params={"cite_keys": cite_keys})
-
-    raise ValueError(f"Unknown tool: {name}")
+    raise ValueError(f"Unknown style profile action: {action}")
 
 
 def safe_filename(title: str) -> str:
@@ -678,6 +477,13 @@ def tool_content(data: Any, is_error: bool = False) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": text}], "isError": is_error}
 
 
+def tool_error(error_type: str, message: str, retryable: bool = False, details: dict[str, Any] | None = None) -> dict[str, Any]:
+    error = {"type": error_type, "message": message, "retryable": retryable}
+    if details:
+        error["details"] = details
+    return {"error": error}
+
+
 def backend_healthy() -> bool:
     try:
         with httpx.Client(base_url=BASE_URL, timeout=3) as client:
@@ -749,10 +555,26 @@ async def handle_request(message: dict[str, Any]) -> dict[str, Any] | None:
             data = await call_tool(name, params.get("arguments") or {})
             return result_response(request_id, tool_content(data))
         except httpx.HTTPStatusError as exc:
-            message_text = f"Syntara HTTP {exc.response.status_code}: {exc.response.text}"
-            return result_response(request_id, tool_content(message_text, is_error=True))
+            status_code = exc.response.status_code
+            data = tool_error(
+                "http_error",
+                f"Syntara HTTP {status_code}",
+                retryable=status_code >= 500,
+                details={"status_code": status_code, "body": exc.response.text},
+            )
+            return result_response(request_id, tool_content(data, is_error=True))
+        except httpx.TimeoutException as exc:
+            data = tool_error("timeout", str(exc) or "Syntara request timed out", retryable=True)
+            return result_response(request_id, tool_content(data, is_error=True))
+        except httpx.RequestError as exc:
+            data = tool_error("backend_unavailable", str(exc), retryable=True)
+            return result_response(request_id, tool_content(data, is_error=True))
+        except (KeyError, ValueError, FileNotFoundError) as exc:
+            data = tool_error("invalid_request", str(exc), retryable=False)
+            return result_response(request_id, tool_content(data, is_error=True))
         except Exception as exc:
-            return result_response(request_id, tool_content(str(exc), is_error=True))
+            data = tool_error("unexpected_error", str(exc), retryable=False)
+            return result_response(request_id, tool_content(data, is_error=True))
 
     if method == "ping":
         return result_response(request_id, {})

@@ -15,6 +15,27 @@ from backend.services.ai_provider import chat_completion
 
 
 MAX_STYLE_CORPUS_CHARS = 60000
+PROFILE_MAX_TOKENS = 8192
+PROFILE_REQUIRED_KEYS = [
+    "source",
+    "writer_profile",
+    "tone",
+    "tone_spectrum",
+    "structure",
+    "rhythm",
+    "argumentation",
+    "reader_relationship",
+    "lexicon",
+    "formatting",
+    "anti_ai",
+    "evidence",
+    "genre_matrix",
+    "cross_genre_constants",
+    "style_evolution",
+    "revision_workflow",
+    "confidence",
+    "reusable_markdown_profile",
+]
 
 
 async def build_style_profile(
@@ -29,7 +50,7 @@ async def build_style_profile(
     set_default: bool = True,
 ) -> dict:
     source_texts, source_ids, source_titles = _collect_style_sources(corpus_ids or [], tag, content, source_title)
-    combined = _trim_corpus("\n\n---\n\n".join(source_texts))
+    combined = _prepare_style_corpus(source_texts)
     if not combined.strip():
         raise ValueError("No style corpus content found")
 
@@ -289,6 +310,32 @@ async def _extract_profile_json(
     source_titles: list[str],
 ) -> dict:
     source_titles_json = json.dumps(source_titles, ensure_ascii=False, indent=2)
+    example_shape = """
+{
+  "schema": "syntara.style_profile.v1",
+  "name": "示例风格",
+  "project": "default",
+  "style_type": "wechat-longform",
+  "source": {"path_or_id": "示例语料", "source_count": 2, "source_titles": ["A.md"], "excluded_sources": [], "sample_strategy": "mcp-build"},
+  "writer_profile": {"summary": "机制型解释者", "voice_origin": ["行业经验"], "do_not_assume": []},
+  "tone": {"summary": "克制、判断明确"},
+  "tone_spectrum": [{"context": "教程", "tone": "直接可操作", "use_when": "解释步骤", "avoid_when": "需要文学化表达"}],
+  "structure": {"opening_patterns": [{"pattern": "问题切入", "use_for": ["教程"], "example": "先问一个问题", "source": "A.md"}], "section_patterns": [], "ending_patterns": []},
+  "rhythm": {"sentence": "长句解释，短句收束", "paragraph": "短段推进"},
+  "argumentation": {"claim_style": "先框架后判断", "evidence_style": "证据服务机制", "counterargument_style": "预设反驳"},
+  "reader_relationship": {"person_strategy": "少量第二人称", "expectation_management": [], "epistemic_honesty": []},
+  "lexicon": {"prefer": [], "avoid": [], "english_usage": "", "caution": []},
+  "formatting": {"headings": "", "bold": "", "tables": "", "quotes": ""},
+  "anti_ai": {"banned_moves": [], "final_checklist": []},
+  "evidence": [{"rule": "先框架后判断", "source_title": "A.md", "example": "短例或转述", "note": "why it matters"}],
+  "genre_matrix": {"教程": {"opening": "", "structure": "", "evidence": "", "person": "", "ending": "", "tone": ""}},
+  "cross_genre_constants": [],
+  "style_evolution": {"periods": [], "current_priority": "", "deprecated_habits": []},
+  "revision_workflow": {"do": [], "avoid": []},
+  "confidence": {"level": "medium", "notes": []},
+  "reusable_markdown_profile": "# 示例风格\\n..."
+}
+""".strip()
     prompt = f"""
 You extract reusable Chinese writing style profiles for Syntara.
 Return strict JSON only. No markdown fence.
@@ -324,6 +371,11 @@ The JSON object must follow `syntara.style_profile.v1` and use these practical k
 - confidence
 - reusable_markdown_profile
 
+ALL keys above are required. Do not omit a key. If evidence is thin, use the field's zero value and explain the limitation in confidence.notes.
+
+Example shape:
+{example_shape}
+
 Write `reusable_markdown_profile` in Chinese, shaped like a compact style document a writing Skill can follow.
 Do not copy long source passages. Extract habits, rules, and constraints.
 Tie important claims to short examples or tight paraphrases in `evidence`.
@@ -336,7 +388,7 @@ Style corpus:
     raw = await chat_completion(
         provider_id,
         [{"role": "user", "content": prompt}],
-        max_tokens=4096,
+        max_tokens=PROFILE_MAX_TOKENS,
         temperature=0.2,
     )
     data = _parse_json_object(raw)
@@ -352,6 +404,7 @@ Style corpus:
         source["source_titles"] = source_titles
         source.setdefault("excluded_sources", [])
         source.setdefault("sample_strategy", "mcp-build")
+    _normalize_profile_shape(data)
     return data
 
 
@@ -397,7 +450,7 @@ USER REVISED VERSION:
     raw = await chat_completion(
         provider_id,
         [{"role": "user", "content": prompt}],
-        max_tokens=4096,
+        max_tokens=PROFILE_MAX_TOKENS,
         temperature=0.2,
     )
     data = _parse_json_object(raw)
@@ -499,6 +552,62 @@ def _unique_list(values: list) -> list:
     return result
 
 
+def _normalize_profile_shape(profile: dict) -> None:
+    missing = []
+    empty = []
+    for key in PROFILE_REQUIRED_KEYS:
+        if key not in profile:
+            profile[key] = _zero_value_for_profile_key(key)
+            missing.append(key)
+        elif profile[key] in ("", [], {}):
+            empty.append(key)
+
+    confidence = profile.setdefault("confidence", {})
+    if not isinstance(confidence, dict):
+        confidence = {"level": str(confidence), "notes": []}
+        profile["confidence"] = confidence
+    confidence.setdefault("level", "medium")
+    notes = confidence.setdefault("notes", [])
+    if missing:
+        notes.append(f"Missing required fields filled with zero values: {', '.join(missing)}")
+    if empty:
+        notes.append(f"Required fields were empty and may need better corpus evidence: {', '.join(empty)}")
+
+
+def _zero_value_for_profile_key(key: str):
+    if key == "source":
+        return {"path_or_id": "", "source_count": 0, "source_titles": [], "excluded_sources": [], "sample_strategy": ""}
+    if key == "writer_profile":
+        return {"summary": "", "voice_origin": [], "do_not_assume": []}
+    if key == "tone":
+        return {"summary": ""}
+    if key == "structure":
+        return {"opening_patterns": [], "section_patterns": [], "ending_patterns": []}
+    if key == "rhythm":
+        return {"sentence": "", "paragraph": ""}
+    if key == "argumentation":
+        return {"claim_style": "", "evidence_style": "", "counterargument_style": ""}
+    if key == "reader_relationship":
+        return {"person_strategy": "", "expectation_management": [], "epistemic_honesty": []}
+    if key == "lexicon":
+        return {"prefer": [], "avoid": [], "english_usage": "", "caution": []}
+    if key == "formatting":
+        return {"headings": "", "bold": "", "tables": "", "quotes": ""}
+    if key == "anti_ai":
+        return {"banned_moves": [], "final_checklist": []}
+    if key == "style_evolution":
+        return {"periods": [], "current_priority": "", "deprecated_habits": []}
+    if key == "revision_workflow":
+        return {"do": [], "avoid": []}
+    if key == "confidence":
+        return {"level": "medium", "notes": []}
+    if key == "reusable_markdown_profile":
+        return ""
+    if key == "genre_matrix":
+        return {}
+    return []
+
+
 def _parse_json_object(text: str) -> dict:
     cleaned = text.strip()
     if cleaned.startswith("```"):
@@ -545,6 +654,23 @@ def _safe_filename(value: str) -> str:
 
 def _slug(value: str) -> str:
     return re.sub(r"[^a-zA-Z0-9_.-]+", "-", value.strip()).strip("-").lower() or "general"
+
+
+def _prepare_style_corpus(source_texts: list[str]) -> str:
+    total = sum(len(text) for text in source_texts)
+    if total <= MAX_STYLE_CORPUS_CHARS:
+        return "\n\n---\n\n".join(source_texts)
+
+    quota = max(1, MAX_STYLE_CORPUS_CHARS // max(len(source_texts), 1))
+    samples = []
+    for text in source_texts:
+        if len(text) <= quota:
+            samples.append(text)
+            continue
+        head_len = max(1, quota * 2 // 3)
+        tail_len = max(1, quota - head_len)
+        samples.append(f"{text[:head_len]}\n\n[...source sample trimmed...]\n\n{text[-tail_len:]}")
+    return "\n\n---\n\n".join(samples)
 
 
 def _trim_corpus(text: str) -> str:

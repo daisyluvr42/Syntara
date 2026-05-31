@@ -26,7 +26,7 @@ Before drafting a full review:
 3. Open context for key chunks that support important claims.
 4. Build a synthesis matrix with source ids or cite keys.
 
-If Syntara returns `search_ready_vector: false`, treat only vector RAG as incomplete. Use `syntara_search_literature_grouped`, `syntara_search`, and `syntara_get_chunk_context` for evidence. If those tools do not return enough evidence, output a search report and `待补证据`, not a finished review.
+If Syntara returns `search_ready_vector: false`, treat only vector RAG as incomplete. Use `syntara_retrieve` with `mode: "literature_grouped"`, `mode: "search"`, and `mode: "chunk_context"` for evidence. If those retrieval modes do not return enough evidence, output a search report and `待补证据`, not a finished review.
 
 ## Inputs To Collect
 
@@ -43,7 +43,7 @@ If topic, review type, or project slug is missing, ask one concise follow-up bef
 
 ## Workflow
 
-1. Select the project. Use `syntara_list_projects` or `syntara_project_summary` when the project is unclear.
+1. Select the project. Use `syntara_status` with `action: "list_projects"` or `action: "project_summary"` when the project is unclear.
 
 2. Resolve style profile for formal review writing. First look for a Syntara profile with `style_type: "literature-review"` in the chosen project. If none exists, check the project default. If none exists, look for user-owned review/article/chapter style samples in the current corpus or connected knowledge base. Use `syntara-style-profiler` to build and save a `literature-review` Markdown + JSON project default profile from an obvious single match, ask the user to choose if there are multiple candidates, or continue with default de-AI if no personal style corpus is available.
 
@@ -51,7 +51,7 @@ If topic, review type, or project slug is missing, ask one concise follow-up bef
 
 4. Build search strands. Use several targeted queries: core concept, synonyms, mechanism, clinical/application setting, methods, controversies, and recent advances.
 
-5. Retrieve evidence with Syntara MCP using the chosen `project`. Prefer `syntara_search_literature_grouped` for source discovery, `syntara_get_chunk_context` for support checks, and `syntara_rag_answer` only for bounded subquestions. If vector RAG is unavailable, continue with grouped full-text search and chunk context.
+5. Retrieve evidence with Syntara MCP using the chosen `project`. Prefer `syntara_retrieve` with `mode: "literature_grouped"` for source discovery, `mode: "chunk_context"` for support checks, and `mode: "rag_answer"` only for bounded subquestions. If vector RAG is unavailable, continue with grouped full-text search and chunk context.
 
 6. Build a synthesis matrix before drafting. Track source, population/domain, method, finding, limitation, and how it affects the review argument. For details, read `references/synthesis-matrix.md`.
 

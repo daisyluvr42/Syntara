@@ -1,35 +1,28 @@
 # Syntara MCP Tools For Reviews
 
-Use these tools with a consistent `project` slug whenever possible.
+Use the smallest sufficient Syntara tool call and pass a consistent `project` slug whenever possible.
 
 ## Readiness Rules
 
 - `search_ready_fts: true` means full-text search can be used for review evidence.
 - `search_ready_vector: false` only means vector/RAG retrieval is incomplete.
-- When vector retrieval is not ready, use grouped full-text search and chunk context.
+- When vector retrieval is not ready, continue with grouped full-text search and chunk context.
 - Do not say Syntara search is unavailable unless source listing and full-text search both fail.
 - Do not draft a finished review from general knowledge when Syntara evidence is missing.
 
-- `syntara_list_projects`: choose an existing project area.
-- `syntara_project_summary`: check counts for one project.
-- `syntara_search_literature_grouped`: discover papers and chunk-level evidence for a review theme.
-- `syntara_get_chunk_context`: verify that a hit truly supports the claim.
-- `syntara_rag_answer`: answer one bounded evidence question; do not use it to draft the whole review.
-- `syntara_search_pubmed`: find candidate PubMed records.
-- `syntara_import_pubmed`: import selected PMIDs into the chosen project.
-- `syntara_import_literature_pdfs`: import local full-text PDFs into the chosen project.
-- PDF import may enrich metadata from DOI/CrossRef/PubMed when identifiers are detected.
-- Provided academic source documents should be imported as literature when they are formal sources; notes, outlines, and drafts should remain corpus.
-- `syntara_list_literature`: inspect project sources and citation metadata.
-- `syntara_get_style_profile`: load the default or named writing style profile for the review project.
-- `syntara_list_style_profiles`: inspect reusable writing styles available for the project.
-- `syntara_build_style_profile`: create a reusable style profile from user-owned review/chapter/article corpus.
-- `syntara_save_style_profile`: save a profile extracted by WorkBuddy or imported from a maintained Markdown style document.
-- `syntara_export_bibtex`: export references after cite keys are stable.
+## Tool Map
 
-For review writing, prefer this order:
+- `syntara_status`: use `action: "list_projects"` to choose a project and `action: "project_summary"` to inspect counts.
+- `syntara_retrieve`: use `mode: "literature_grouped"` for source discovery, `mode: "chunk_context"` for support checks, `mode: "search"` for broad search, and `mode: "rag_answer"` only for bounded evidence questions.
+- `syntara_external_search`: use `provider: "pubmed"` to find candidate PubMed records.
+- `syntara_import`: use `source_type: "pubmed"` for PMIDs and `source_type: "literature_pdfs"` for local full-text PDFs.
+- `syntara_sources`: use `source_type: "literature"` to inspect project sources and citation metadata.
+- `syntara_style_profile`: use `action: "list"` / `"get"` for review style profiles and `action: "build"` / `"save"` when creating one from user-owned writing samples.
+- `syntara_citations`: use `action: "export_bibtex"` or `action: "format"` after cite keys are stable.
 
-1. List or confirm project.
+## Review Order
+
+1. Confirm the project.
 2. Load the project default style profile if the task is formal writing.
 3. Search grouped literature by theme.
 4. Open context for key chunks.
