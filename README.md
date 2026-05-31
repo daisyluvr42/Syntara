@@ -30,7 +30,7 @@ cd Syntara
 安装 WorkBuddy MCP 和内置 Skill：
 
 ```bash
-python mcp/install_syntara_workbuddy.py
+python3 mcp/syntara.py install workbuddy
 ```
 
 然后在 WorkBuddy 的 MCP 管理页信任并启用 `syntara`。
@@ -38,14 +38,16 @@ python mcp/install_syntara_workbuddy.py
 卸载 WorkBuddy 接入：
 
 ```bash
-python mcp/install_syntara_workbuddy.py --uninstall
+python3 mcp/syntara.py uninstall workbuddy
 ```
+
+旧教程中的 `python3 mcp/install_syntara_workbuddy.py` 仍然可用，会自动转到新的统一入口。
 
 如果使用 TRAE SOLO：
 
 ```bash
 cd /path/to/Syntara
-python mcp/install_syntara_trae_solo.py
+python3 mcp/syntara.py install trae
 ```
 
 然后重启 TRAE SOLO，并在 MCP 面板中启用 `syntara`。
@@ -54,10 +56,17 @@ python mcp/install_syntara_trae_solo.py
 
 ```bash
 cd /path/to/Syntara
-python mcp/install_syntara_trae_solo.py --uninstall
+python3 mcp/syntara.py uninstall trae
 ```
 
-卸载只会移除对应客户端里的 MCP 配置和复制进去的 Syntara Skill，不会删除本地 Syntara 数据库、PDF、语料或风格档案。
+更新 Syntara 并刷新客户端接入：
+
+```bash
+python3 mcp/syntara.py update workbuddy
+python3 mcp/syntara.py update trae
+```
+
+更新和卸载都不会删除本地 Syntara 数据库、PDF、语料或风格档案。
 
 完整教程见 [docs/installation-and-usage.md](docs/installation-and-usage.md)。
 
@@ -106,7 +115,7 @@ Default URLs:
 Install the WorkBuddy MCP entry and built-in skills:
 
 ```bash
-python mcp/install_syntara_workbuddy.py
+python3 mcp/syntara.py install workbuddy
 ```
 
 Then trust and enable `syntara` in WorkBuddy's MCP management page.
@@ -114,14 +123,16 @@ Then trust and enable `syntara` in WorkBuddy's MCP management page.
 Uninstall the WorkBuddy integration:
 
 ```bash
-python mcp/install_syntara_workbuddy.py --uninstall
+python3 mcp/syntara.py uninstall workbuddy
 ```
+
+The older `python3 mcp/install_syntara_workbuddy.py` command still works and forwards to the unified entrypoint.
 
 For TRAE SOLO:
 
 ```bash
 cd /path/to/Syntara
-python mcp/install_syntara_trae_solo.py
+python3 mcp/syntara.py install trae
 ```
 
 Then restart TRAE SOLO and enable `syntara` from the MCP panel if prompted.
@@ -130,10 +141,17 @@ Uninstall the TRAE SOLO integration:
 
 ```bash
 cd /path/to/Syntara
-python mcp/install_syntara_trae_solo.py --uninstall
+python3 mcp/syntara.py uninstall trae
 ```
 
-Uninstall only removes the client MCP entry and copied Syntara skills. It does not delete local Syntara databases, PDFs, corpora, or style profiles.
+Update Syntara and refresh a client integration:
+
+```bash
+python3 mcp/syntara.py update workbuddy
+python3 mcp/syntara.py update trae
+```
+
+Update and uninstall do not delete local Syntara databases, PDFs, corpora, or style profiles.
 
 For full setup and usage instructions, see [docs/installation-and-usage.md](docs/installation-and-usage.md).
 
