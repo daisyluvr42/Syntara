@@ -99,6 +99,15 @@ python mcp/install_syntara_workbuddy.py \
 python mcp/install_syntara_workbuddy.py --setup-style
 ```
 
+卸载 WorkBuddy 接入：
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_workbuddy.py --uninstall
+```
+
+卸载只会移除 WorkBuddy 中的 `syntara` MCP 配置和复制进去的 Syntara Skill，不会删除本地 Syntara 数据库、PDF、语料或风格档案。
+
 ## 5. 连接 TRAE SOLO MCP
 
 TRAE SOLO 也支持 MCP。Syntara 使用 stdio MCP，因此可以复用同一个后端入口。
@@ -477,6 +486,15 @@ Or use the interactive setup:
 ```bash
 python mcp/install_syntara_workbuddy.py --setup-style
 ```
+
+Uninstall the WorkBuddy integration:
+
+```bash
+cd /path/to/Syntara
+python mcp/install_syntara_workbuddy.py --uninstall
+```
+
+Uninstall removes only the `syntara` MCP entry and copied Syntara skills from WorkBuddy. It does not delete local Syntara databases, PDFs, corpora, or style profiles.
 
 ## 5. Connect TRAE SOLO MCP
 

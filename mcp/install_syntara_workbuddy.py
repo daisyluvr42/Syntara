@@ -70,6 +70,7 @@ def restart_existing_syntara_mcp() -> int:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Install Syntara MCP into WorkBuddy.")
+    parser.add_argument("--uninstall", action="store_true", help="Remove Syntara MCP config and copied WorkBuddy skills.")
     parser.add_argument("--style-file", help="Optional Markdown/TXT style profile or style corpus to save during setup.")
     parser.add_argument("--style-name", default="Default Writing Style", help="Name for the imported style profile.")
     parser.add_argument("--style-project", default="default", help="Syntara project slug for the style profile.")
@@ -82,6 +83,16 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--setup-style", action="store_true", help="Prompt for a style file path after installing MCP.")
     parser.add_argument("--skip-skills", action="store_true", help="Do not install Syntara WorkBuddy skills.")
     return parser.parse_args()
+
+
+def uninstall_mcp_config() -> bool:
+    config = read_config()
+    servers = config.get("mcpServers")
+    if not isinstance(servers, dict) or "syntara" not in servers:
+        return False
+    del servers["syntara"]
+    write_config(config)
+    return True
 
 
 def import_style_file(args: argparse.Namespace) -> dict | None:
@@ -173,8 +184,38 @@ def install_workbuddy_skills() -> list[str]:
     return installed
 
 
+def uninstall_workbuddy_skills() -> list[str]:
+    removed: list[str] = []
+    for skill_name, display_name in SKILLS.items():
+        dst = SKILLS_DIR / skill_name
+        if dst.exists():
+            shutil.rmtree(dst)
+            removed.append(f"{display_name} ({skill_name})")
+    return removed
+
+
 def main() -> int:
     args = parse_args()
+    if args.uninstall:
+        removed_config = uninstall_mcp_config()
+        removed_skills = [] if args.skip_skills else uninstall_workbuddy_skills()
+        killed = restart_existing_syntara_mcp()
+
+        if removed_config:
+            print(f"Removed Syntara MCP from WorkBuddy: {CONFIG}")
+        else:
+            print("Syntara MCP was not present in WorkBuddy config.")
+        if removed_skills:
+            print("Removed WorkBuddy Syntara skills:")
+            for skill in removed_skills:
+                print(f"- {skill}")
+        elif not args.skip_skills:
+            print("No WorkBuddy Syntara skills were found.")
+        if killed:
+            print(f"Stopped {killed} existing Syntara MCP process(es).")
+        print("Restart WorkBuddy to refresh the MCP and skill lists.")
+        return 0
+
     if not PYTHON.exists():
         print(f"Missing virtualenv Python: {PYTHON}", file=sys.stderr)
         print("Run this first: python3 -m venv .venv && .venv/bin/pip install -r requirements.txt", file=sys.stderr)
