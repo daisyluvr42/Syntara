@@ -9,7 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from backend.config import CORPUS_DIR
-from backend.db.sqlite import get_connection
+from backend.db.sqlite import get_connection, tag_filter_clause
 from backend.models.corpus import CorpusCreate
 from backend.services.corpus import import_corpus_file
 from backend.services.indexer import remove_index
@@ -25,14 +25,19 @@ async def list_corpus(skip: int = 0, limit: int = 50, tag: str | None = None):
     params: list = []
 
     if tag:
-        query += " WHERE tags LIKE ?"
-        params.append(f"%{tag}%")
+        query += f" WHERE {tag_filter_clause()}"
+        params.append(tag)
 
     query += " ORDER BY updated_at DESC LIMIT ? OFFSET ?"
     params.extend([limit, skip])
 
     rows = conn.execute(query, params).fetchall()
-    total = conn.execute("SELECT COUNT(*) as c FROM corpus").fetchone()["c"]
+    count_query = "SELECT COUNT(*) as c FROM corpus"
+    count_params: list = []
+    if tag:
+        count_query += f" WHERE {tag_filter_clause()}"
+        count_params.append(tag)
+    total = conn.execute(count_query, count_params).fetchone()["c"]
 
     items = []
     for r in rows:
@@ -114,6 +119,9 @@ async def delete_corpus(corpus_id: str):
 async def update_corpus_tags(corpus_id: str, tags: list[str]):
     """Update tags for a corpus entry."""
     conn = get_connection()
+    row = conn.execute("SELECT id FROM corpus WHERE id = ?", (corpus_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Corpus entry not found")
     conn.execute(
         "UPDATE corpus SET tags = ?, updated_at = ? WHERE id = ?",
         (json.dumps(tags), datetime.now().isoformat(), corpus_id),

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -12,7 +13,7 @@ import jieba
 
 from backend.config import SQLITE_DB_PATH
 
-_connection: sqlite3.Connection | None = None
+_connections = threading.local()
 
 
 def _jieba_tokenize(text: str) -> str:
@@ -26,13 +27,15 @@ def _jieba_tokenize(text: str) -> str:
 
 
 def get_connection() -> sqlite3.Connection:
-    global _connection
-    if _connection is None:
-        _connection = sqlite3.connect(str(SQLITE_DB_PATH), check_same_thread=False)
-        _connection.row_factory = sqlite3.Row
-        _connection.execute("PRAGMA journal_mode=WAL")
-        _connection.execute("PRAGMA foreign_keys=ON")
-    return _connection
+    conn = getattr(_connections, "connection", None)
+    if conn is None:
+        conn = sqlite3.connect(str(SQLITE_DB_PATH), timeout=30)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        conn.execute("PRAGMA busy_timeout=30000")
+        _connections.connection = conn
+    return conn
 
 
 @contextmanager
@@ -60,6 +63,10 @@ def _ensure_column(table: str, definition: str) -> None:
         conn.commit()
 
 
+def tag_filter_clause(column: str = "tags") -> str:
+    return f"EXISTS (SELECT 1 FROM json_each({column}) WHERE value = ?)"
+
+
 def _sync_literature_processing_state() -> None:
     conn = get_connection()
     columns = _get_table_columns("literature")
@@ -73,21 +80,6 @@ def _sync_literature_processing_state() -> None:
         for r in conn.execute("SELECT DISTINCT literature_id FROM literature_fts").fetchall()
     }
 
-    # Build set of literature IDs that have vector entries (single batch query)
-    vector_ids: set[str] = set()
-    try:
-        from backend.db.chromadb_store import get_collection
-
-        collection = get_collection()
-        # Fetch all metadatas in one call to extract unique source_ids
-        all_data = collection.get(include=["metadatas"])
-        for meta in (all_data.get("metadatas") or []):
-            sid = (meta or {}).get("source_id")
-            if sid:
-                vector_ids.add(sid)
-    except Exception:
-        pass
-
     rows = conn.execute(
         """
         SELECT id, file_path, full_text, processing_status, processing_error
@@ -95,12 +87,25 @@ def _sync_literature_processing_state() -> None:
         """
     ).fetchall()
 
+    collection = None
+    try:
+        from backend.db.chromadb_store import get_collection
+
+        collection = get_collection()
+    except Exception:
+        collection = None
+
     for row in rows:
         lit_id = row["id"]
         full_text = row["full_text"] or ""
         has_full_text = bool(full_text.strip())
         fts_ready = lit_id in fts_ids
-        vector_ready = lit_id in vector_ids
+        vector_ready = False
+        if collection is not None:
+            try:
+                vector_ready = bool(collection.get(where={"source_id": lit_id}, limit=1, include=[]).get("ids"))
+            except Exception:
+                vector_ready = False
 
         if row["processing_error"]:
             status = "failed"
@@ -255,6 +260,12 @@ def init_db():
             PRIMARY KEY (query_key, lit_id, chunk_index)
         );
 
+        CREATE TABLE IF NOT EXISTS app_config (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+
         -- FTS5 virtual table for full-text search
         CREATE VIRTUAL TABLE IF NOT EXISTS literature_fts USING fts5(
             literature_id,
@@ -270,14 +281,38 @@ def init_db():
             content,
             tokenize='unicode61'
         );
+
+        CREATE INDEX IF NOT EXISTS idx_literature_doi ON literature(doi);
+        CREATE INDEX IF NOT EXISTS idx_literature_pmid ON literature(pmid);
+        CREATE INDEX IF NOT EXISTS idx_literature_file_hash ON literature(file_hash);
+        CREATE INDEX IF NOT EXISTS idx_corpus_file_hash ON corpus(file_hash);
     """)
     _ensure_column("literature", "processing_status TEXT NOT NULL DEFAULT 'ready'")
     _ensure_column("literature", "processing_error TEXT")
     _ensure_column("literature", "processing_progress TEXT")
     _ensure_column("literature", "search_ready_fts INTEGER NOT NULL DEFAULT 0")
     _ensure_column("literature", "search_ready_vector INTEGER NOT NULL DEFAULT 0")
+    _load_runtime_config()
     _sync_literature_processing_state()
     conn.commit()
+
+
+def _load_runtime_config() -> None:
+    conn = get_connection()
+    rows = conn.execute(
+        "SELECT key, value FROM app_config WHERE key LIKE 'embedding.%'"
+    ).fetchall()
+    if not rows:
+        return
+
+    import backend.config as cfg
+
+    config_map = {row["key"]: row["value"] for row in rows}
+    cfg.EMBEDDING_MODE = config_map.get("embedding.mode", cfg.EMBEDDING_MODE)
+    cfg.EMBEDDING_API_BASE = config_map.get("embedding.api_base", cfg.EMBEDDING_API_BASE)
+    cfg.EMBEDDING_API_KEY = config_map.get("embedding.api_key", cfg.EMBEDDING_API_KEY)
+    cfg.EMBEDDING_MODEL = config_map.get("embedding.model", cfg.EMBEDDING_MODEL)
+    cfg.EMBEDDING_CLOUD_BRAND = config_map.get("embedding.cloud_brand", cfg.EMBEDDING_CLOUD_BRAND)
 
 
 def index_literature_fts(lit_id: str, title: str, abstract: str | None, full_text: str | None):

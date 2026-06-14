@@ -7,7 +7,7 @@ from collections import defaultdict
 
 from fastapi import APIRouter
 
-from backend.db.sqlite import get_connection
+from backend.db.sqlite import get_connection, tag_filter_clause
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -36,13 +36,13 @@ async def list_projects():
 @router.get("/{project}")
 async def get_project(project: str):
     conn = get_connection()
-    tag = f"%project:{project}%"
+    tag = f"project:{project}"
     literature_count = conn.execute(
-        "SELECT COUNT(*) as c FROM literature WHERE tags LIKE ?",
+        f"SELECT COUNT(*) as c FROM literature WHERE {tag_filter_clause()}",
         (tag,),
     ).fetchone()["c"]
     corpus_count = conn.execute(
-        "SELECT COUNT(*) as c FROM corpus WHERE tags LIKE ?",
+        f"SELECT COUNT(*) as c FROM corpus WHERE {tag_filter_clause()}",
         (tag,),
     ).fetchone()["c"]
     return {

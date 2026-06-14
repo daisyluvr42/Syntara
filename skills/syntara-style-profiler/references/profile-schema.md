@@ -103,6 +103,7 @@ Use this shape for `profile_json` when calling `syntara_style_profile` with `act
       "diction_level": [],
       "evidence_level": [],
       "formatting_level": [],
+      "over_polish_patterns": [],
       "examples": [
         {
           "before": "",
@@ -131,5 +132,5 @@ Rules:
 - `updated_from_profile_id` should be the prior Syntara profile id when updating a profile.
 - `evidence` should contain short examples or tight paraphrases tied to filenames. It is not a quote dump; it exists to prevent unsupported style claims.
 - `tone_spectrum`, `genre_matrix`, `reader_relationship`, and `style_evolution` are required when the corpus has mixed genres or spans a meaningful time period.
-- `revision_preferences` stores durable user editing habits learned from original/revised draft pairs. Keep examples short and merge them into the same profile instead of creating a separate diff profile.
+- `revision_preferences` stores durable user editing habits learned from original/revised draft pairs. Keep examples short and merge them into the same profile instead of creating a separate diff profile. Use `over_polish_patterns` for AI-like revisions the user tends to undo, such as meaning inflation, forced contrast, invented scene detail, excessive smoothing, or loss of colloquial rhythm.
 - Use `confidence.level` as `low`, `medium`, or `high`.

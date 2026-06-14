@@ -59,6 +59,8 @@ If topic, review type, or project slug is missing, ask one concise follow-up bef
 
 8. Run a final evidence pass. Check that each strong claim has a source, each citation supports the sentence it follows, and uncertainty is stated honestly.
 
+9. Run a final style pass. When revising user-owned prose or applying the user's style profile, apply `../syntara-knowledge-writing/references/human-revision-gate.md` so the review does not become smoother but less like the author.
+
 ## Output Shape
 
 Unless the user specifies another format, return:
@@ -70,6 +72,8 @@ Unless the user specifies another format, return:
 - Optional table-like synthesis matrix if useful.
 - Inline citation markers in `[@citekey]` form.
 - `待补证据` list for claims needing more retrieval.
+
+For polish or revision tasks, preserve the user's author hand. Do not replace plain uncertainty, hesitation, or direct repetition with a more generic review-paper cadence unless the original creates real reading or evidence problems.
 
 ## When To Use Other Syntara Skills
 

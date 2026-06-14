@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException
 
@@ -172,18 +173,16 @@ async def update_provider(provider_id: str, data: AIProviderConfigUpdate):
     if not row:
         raise HTTPException(404, "Provider not found")
 
-    updates = {}
-    for field, value in data.model_dump(exclude_unset=True).items():
-        if value is not None:
-            updates[field] = value
+    updates = data.model_dump(exclude_unset=True)
 
     if not updates:
         return {"ok": True}
 
     # If setting as default, unset others
-    if updates.get("is_default"):
+    if updates.get("is_default") is True:
         conn.execute("UPDATE ai_provider_config SET is_default = 0")
-        updates["is_default"] = 1
+    if "is_default" in updates:
+        updates["is_default"] = int(bool(updates["is_default"]))
 
     set_clause = ", ".join(f"{k} = ?" for k in updates)
     values = list(updates.values()) + [provider_id]
@@ -196,6 +195,9 @@ async def update_provider(provider_id: str, data: AIProviderConfigUpdate):
 async def delete_provider(provider_id: str):
     """Delete an AI provider configuration."""
     conn = get_connection()
+    row = conn.execute("SELECT id FROM ai_provider_config WHERE id = ?", (provider_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Provider not found")
     conn.execute("DELETE FROM ai_provider_config WHERE id = ?", (provider_id,))
     conn.commit()
     return {"ok": True}
@@ -231,19 +233,35 @@ async def get_embedding_brands():
 
 @router.put("/embedding-config")
 async def update_embedding_config(data: EmbeddingConfig):
-    """Update embedding configuration (modifies runtime config)."""
+    """Update embedding configuration."""
     import backend.config as cfg
     cfg.EMBEDDING_MODE = data.mode
-    if data.api_base:
-        cfg.EMBEDDING_API_BASE = data.api_base
-    if data.api_key:
-        cfg.EMBEDDING_API_KEY = data.api_key
-    if data.model:
-        cfg.EMBEDDING_MODEL = data.model
+    cfg.EMBEDDING_API_BASE = data.api_base
+    cfg.EMBEDDING_API_KEY = data.api_key
+    cfg.EMBEDDING_MODEL = data.model
+    cfg.EMBEDDING_CLOUD_BRAND = data.cloud_brand
     if data.cloud_brand:
-        cfg.EMBEDDING_CLOUD_BRAND = data.cloud_brand
         # Auto-set model to brand default if user didn't override
         registry = cfg.EMBEDDING_CLOUD_REGISTRY.get(data.cloud_brand, {})
         if not data.model and registry:
             cfg.EMBEDDING_MODEL = registry.get("default_model", "")
+
+    conn = get_connection()
+    now = datetime.now().isoformat()
+    values = {
+        "embedding.mode": cfg.EMBEDDING_MODE,
+        "embedding.api_base": cfg.EMBEDDING_API_BASE,
+        "embedding.api_key": cfg.EMBEDDING_API_KEY,
+        "embedding.model": cfg.EMBEDDING_MODEL,
+        "embedding.cloud_brand": cfg.EMBEDDING_CLOUD_BRAND,
+    }
+    conn.executemany(
+        """
+        INSERT INTO app_config (key, value, updated_at)
+        VALUES (?, ?, ?)
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+        """,
+        [(key, value, now) for key, value in values.items()],
+    )
+    conn.commit()
     return {"ok": True}

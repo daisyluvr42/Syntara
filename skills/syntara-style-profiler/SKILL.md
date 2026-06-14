@@ -119,6 +119,8 @@ Use this branch when the user says they edited the generated article/chapter/dec
    - Learn what the user removed, compressed, expanded, reordered, renamed, softened, sharpened, or made more concrete.
    - Separate factual corrections from style rules. A corrected fact belongs to evidence discipline, not voice imitation.
    - Prefer durable preferences over one-off edits.
+   - Pay special attention to AI-polish reversals: places where the user restored plainer wording, rougher rhythm, colloquial particles, direct repetition, hesitation, or a less "clever" sentence.
+   - Record rejected AI-like moves such as meaning inflation, forced contrasts, slogan endings, invented scene/detail, decorative formatting, and over-balanced structures.
 
 3. Call `syntara_style_profile` with `action: "update_from_revision"` and:
    - `original_text`: the AI/generated draft before user edits.
@@ -129,7 +131,7 @@ Use this branch when the user says they edited the generated article/chapter/dec
 4. Confirm the merged result:
    - Report the new profile id.
    - State that revision preferences were integrated into the profile Markdown and JSON.
-   - Mention the highest-signal learned preferences, especially banned AI-like moves and preferred revision habits.
+   - Mention the highest-signal learned preferences, especially banned AI-like moves, over-polish patterns, and preferred revision habits.
    - Do not proceed to rewrite another draft unless the user asks.
 
 ## Safety Rules

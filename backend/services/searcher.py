@@ -143,8 +143,8 @@ async def grouped_literature_search(
     params = list(sorted_ids)
     project_clause = ""
     if project:
-        project_clause = " AND tags LIKE ?"
-        params.append(f"%project:{project}%")
+        project_clause = f" AND {sqlite.tag_filter_clause()}"
+        params.append(f"project:{project}")
     rows = conn.execute(
         f"""
         SELECT id, cite_key, title, authors, year, journal, abstract, file_hash, full_text
@@ -374,13 +374,31 @@ def _enrich_results(results: list[dict], project: str | None = None) -> list[dic
     """Add metadata from SQLite to search results."""
     conn = sqlite.get_connection()
 
+    literature_ids = [result["id"] for result in results if result["source_type"] == "literature"]
+    corpus_ids = [result["id"] for result in results if result["source_type"] == "corpus"]
+    literature_rows = {}
+    corpus_rows = {}
+
+    if literature_ids:
+        placeholders = ",".join("?" for _ in literature_ids)
+        rows = conn.execute(
+            f"SELECT id, cite_key, title, authors, year, journal, abstract, tags FROM literature WHERE id IN ({placeholders})",
+            literature_ids,
+        ).fetchall()
+        literature_rows = {row["id"]: row for row in rows}
+
+    if corpus_ids:
+        placeholders = ",".join("?" for _ in corpus_ids)
+        rows = conn.execute(
+            f"SELECT id, title, description, tags FROM corpus WHERE id IN ({placeholders})",
+            corpus_ids,
+        ).fetchall()
+        corpus_rows = {row["id"]: row for row in rows}
+
     enriched = []
     for result in results:
         if result["source_type"] == "literature":
-            row = conn.execute(
-                "SELECT id, cite_key, title, authors, year, journal, abstract, tags FROM literature WHERE id = ?",
-                (result["id"],),
-            ).fetchone()
+            row = literature_rows.get(result["id"])
             if row:
                 tags = json.loads(row["tags"]) if row["tags"] else []
                 if project and f"project:{project}" not in tags:
@@ -394,10 +412,7 @@ def _enrich_results(results: list[dict], project: str | None = None) -> list[dic
                 result["tags"] = tags
                 enriched.append(result)
         elif result["source_type"] == "corpus":
-            row = conn.execute(
-                "SELECT id, title, description, tags FROM corpus WHERE id = ?",
-                (result["id"],),
-            ).fetchone()
+            row = corpus_rows.get(result["id"])
             if row:
                 tags = json.loads(row["tags"]) if row["tags"] else []
                 if project and f"project:{project}" not in tags:

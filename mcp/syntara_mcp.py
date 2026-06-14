@@ -10,7 +10,6 @@ import os
 import re
 import subprocess
 import sys
-import time
 from typing import Any
 from pathlib import Path
 from urllib.parse import urlparse
@@ -22,8 +21,11 @@ TIMEOUT = float(os.getenv("SYNTARA_MCP_TIMEOUT", "60"))
 STYLE_TIMEOUT = float(os.getenv("SYNTARA_MCP_STYLE_TIMEOUT", "180"))
 AUTO_START = os.getenv("SYNTARA_MCP_AUTO_START", "1") != "0"
 BASE_DIR = Path(__file__).resolve().parents[1]
-BACKEND_PROCESS: subprocess.Popen | None = None
+BACKEND_PROCESS: asyncio.subprocess.Process | None = None
+BACKEND_LOG_FILE: Any | None = None
+HTTP_CLIENT: httpx.AsyncClient | None = None
 MESSAGE_MODE = "headers"
+SUPPORTED_PROTOCOL_VERSION = "2024-11-05"
 
 
 AGGREGATE_TOOLS: list[dict[str, Any]] = [
@@ -162,14 +164,21 @@ TOOLS = AGGREGATE_TOOLS
 
 
 async def http_request(method: str, path: str, timeout: float | None = None, **kwargs: Any) -> Any:
-    ensure_backend()
-    async with httpx.AsyncClient(base_url=BASE_URL, timeout=timeout or TIMEOUT) as client:
-        response = await client.request(method, path, **kwargs)
-        response.raise_for_status()
-        content_type = response.headers.get("content-type", "")
-        if "application/json" in content_type:
-            return response.json()
-        return response.text
+    await ensure_backend()
+    client = get_http_client()
+    response = await client.request(method, path, timeout=timeout or TIMEOUT, **kwargs)
+    response.raise_for_status()
+    content_type = response.headers.get("content-type", "")
+    if "application/json" in content_type:
+        return response.json()
+    return response.text
+
+
+def get_http_client() -> httpx.AsyncClient:
+    global HTTP_CLIENT
+    if HTTP_CLIENT is None or HTTP_CLIENT.is_closed:
+        HTTP_CLIENT = httpx.AsyncClient(base_url=BASE_URL, timeout=TIMEOUT)
+    return HTTP_CLIENT
 
 
 def clean_args(arguments: dict[str, Any] | None) -> dict[str, Any]:
@@ -187,6 +196,7 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
             return await http_request("GET", "/api/projects")
         if action == "project_summary":
             return await http_request("GET", f"/api/projects/{project_slug(args['project'])}")
+        raise ValueError(f"Unknown syntara_status action: {action}")
 
     if name == "syntara_retrieve":
         mode = args.get("mode", "search")
@@ -217,15 +227,19 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
         if mode == "chunk_context":
             payload = {"lit_id": args["lit_id"], "chunk_index": args["chunk_index"]}
             return await http_request("POST", "/api/search/chunk-context", json=payload)
+        raise ValueError(f"Unknown syntara_retrieve mode: {mode}")
 
     if name == "syntara_sources":
         params = {"skip": args.get("skip", 0), "limit": args.get("limit", 20)}
         if args.get("tag"):
             params["tag"] = args["tag"]
-        if args.get("project"):
+        elif args.get("project"):
             params["tag"] = project_tag(args["project"])
-        if args.get("source_type", "literature") == "corpus":
+        source_type = args.get("source_type", "literature")
+        if source_type == "corpus":
             return await http_request("GET", "/api/corpus", params=params)
+        if source_type != "literature":
+            raise ValueError(f"Unknown syntara_sources source_type: {source_type}")
         params["sort_by"] = args.get("sort_by", "updated_at")
         params["order"] = args.get("order", "desc")
         return await http_request("GET", "/api/literature", params=params)
@@ -238,6 +252,7 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
             return await import_pubmed(args)
         if source_type == "literature_pdfs":
             return await import_literature_pdfs(args)
+        raise ValueError(f"Unknown syntara_import source_type: {source_type}")
 
     if name == "syntara_style_profile":
         return await style_profile_action(args)
@@ -247,6 +262,7 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
         if provider == "pubmed":
             params = {"query": args["query"], "max_results": args.get("max_results", 20)}
             return await http_request("GET", "/api/pubmed/search", params=params)
+        raise ValueError(f"Unknown syntara_external_search provider: {provider}")
 
     if name == "syntara_citations":
         action = args["action"]
@@ -256,6 +272,7 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> Any:
         if action == "export_bibtex":
             cite_keys = ",".join(args.get("cite_keys") or [])
             return await http_request("GET", "/api/export/bibtex", params={"cite_keys": cite_keys})
+        raise ValueError(f"Unknown syntara_citations action: {action}")
 
     raise ValueError(f"Unknown tool: {name}")
 
@@ -484,17 +501,17 @@ def tool_error(error_type: str, message: str, retryable: bool = False, details: 
     return {"error": error}
 
 
-def backend_healthy() -> bool:
+async def backend_healthy() -> bool:
     try:
-        with httpx.Client(base_url=BASE_URL, timeout=3) as client:
-            response = client.get("/api/health")
-            return response.status_code == 200
+        async with httpx.AsyncClient(base_url=BASE_URL, timeout=3) as client:
+            response = await client.get("/api/health")
+        return response.status_code == 200
     except Exception:
         return False
 
 
-def ensure_backend() -> None:
-    if backend_healthy() or not AUTO_START:
+async def ensure_backend() -> None:
+    if await backend_healthy() or not AUTO_START:
         return
 
     parsed = urlparse(BASE_URL)
@@ -504,28 +521,35 @@ def ensure_backend() -> None:
     env["SYNTARA_HOST"] = host
     env["SYNTARA_PORT"] = port
 
-    global BACKEND_PROCESS
-    BACKEND_PROCESS = subprocess.Popen(
-        [sys.executable, "-m", "uvicorn", "backend.main:app", "--host", host, "--port", port],
+    global BACKEND_LOG_FILE, BACKEND_PROCESS
+    log_dir = BASE_DIR / "data" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    BACKEND_LOG_FILE = (log_dir / "syntara_mcp_backend.log").open("ab")
+    BACKEND_PROCESS = await asyncio.create_subprocess_exec(
+        sys.executable, "-m", "uvicorn", "backend.main:app", "--host", host, "--port", port,
         cwd=str(BASE_DIR),
         env=env,
         stdin=subprocess.DEVNULL,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=BACKEND_LOG_FILE,
+        stderr=BACKEND_LOG_FILE,
     )
     atexit.register(stop_backend)
 
     for _ in range(40):
-        if backend_healthy():
+        if await backend_healthy():
             return
-        if BACKEND_PROCESS.poll() is not None:
+        if BACKEND_PROCESS.returncode is not None:
             return
-        time.sleep(0.25)
+        await asyncio.sleep(0.25)
 
 
 def stop_backend() -> None:
-    if BACKEND_PROCESS and BACKEND_PROCESS.poll() is None:
+    global BACKEND_LOG_FILE
+    if BACKEND_PROCESS and BACKEND_PROCESS.returncode is None:
         BACKEND_PROCESS.terminate()
+    if BACKEND_LOG_FILE:
+        BACKEND_LOG_FILE.close()
+        BACKEND_LOG_FILE = None
 
 
 async def handle_request(message: dict[str, Any]) -> dict[str, Any] | None:
@@ -540,7 +564,7 @@ async def handle_request(message: dict[str, Any]) -> dict[str, Any] | None:
         return result_response(
             request_id,
             {
-                "protocolVersion": params.get("protocolVersion", "2024-11-05"),
+                "protocolVersion": SUPPORTED_PROTOCOL_VERSION,
                 "capabilities": {"tools": {}},
                 "serverInfo": {"name": "syntara", "version": "0.1.0"},
             },
@@ -583,13 +607,23 @@ async def handle_request(message: dict[str, Any]) -> dict[str, Any] | None:
 
 
 async def main() -> None:
-    while True:
-        message = await asyncio.to_thread(read_message)
-        if message is None:
-            break
-        response = await handle_request(message)
-        if response is not None:
-            write_message(response)
+    global HTTP_CLIENT
+    try:
+        while True:
+            try:
+                message = await asyncio.to_thread(read_message)
+            except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
+                write_message(error_response(None, -32700, f"Parse error: {exc}"))
+                continue
+            if message is None:
+                break
+            response = await handle_request(message)
+            if response is not None:
+                write_message(response)
+    finally:
+        if HTTP_CLIENT is not None:
+            await HTTP_CLIENT.aclose()
+            HTTP_CLIENT = None
 
 
 if __name__ == "__main__":

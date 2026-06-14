@@ -14,7 +14,7 @@ from fastapi import APIRouter, File, HTTPException, UploadFile
 
 from backend.config import FILES_DIR
 from backend.db import sqlite
-from backend.db.sqlite import get_connection
+from backend.db.sqlite import get_connection, tag_filter_clause
 from backend.models.literature import LiteratureCreate, LiteratureUpdate
 from backend.services.indexer import index_literature, remove_index
 from backend.services.metadata import process_pdf_metadata
@@ -45,6 +45,16 @@ def recover_stuck_processing():
 router = APIRouter(prefix="/api/literature", tags=["literature"])
 
 
+def _auto_build_doc_tree(lit_id: str, title: str, elements: list[dict]) -> None:
+    if not elements:
+        return
+    from backend.services.doc_tree_builder import build_tree
+    from backend.services.doc_tree_cache import save_tree
+
+    tree = build_tree(lit_id, title, elements)
+    save_tree(tree)
+
+
 @router.get("")
 async def list_literature(
     skip: int = 0,
@@ -60,8 +70,8 @@ async def list_literature(
     params: list = []
 
     if tag:
-        query += " WHERE tags LIKE ?"
-        params.append(f"%{tag}%")
+        query += f" WHERE {tag_filter_clause()}"
+        params.append(tag)
 
     valid_sorts = {"title", "year", "created_at", "updated_at", "imported_at", "cite_key"}
     if sort_by not in valid_sorts:
@@ -75,8 +85,8 @@ async def list_literature(
     count_query = "SELECT COUNT(*) as c FROM literature"
     count_params: list = []
     if tag:
-        count_query += " WHERE tags LIKE ?"
-        count_params.append(f"%{tag}%")
+        count_query += f" WHERE {tag_filter_clause()}"
+        count_params.append(tag)
     total = conn.execute(count_query, count_params).fetchone()["c"]
 
     items = []
@@ -312,23 +322,25 @@ async def update_literature(lit_id: str, data: LiteratureUpdate):
 
     updates = {}
     for field, value in data.model_dump(exclude_unset=True).items():
-        if value is not None:
-            if field == "authors":
+        if field == "authors":
+            if value is not None:
                 updates["authors"] = json.dumps([a.model_dump() if hasattr(a, 'model_dump') else a for a in value])
-            elif field in ("keywords", "tags"):
+        elif field in ("keywords", "tags"):
+            if value is not None:
                 updates[field] = json.dumps(value)
-            elif field == "type":
+        elif field == "type":
+            if value is not None:
                 updates[field] = value.value if hasattr(value, 'value') else value
-            else:
-                updates[field] = value
+        elif field == "manually_verified":
+            if value is not None:
+                updates[field] = int(bool(value))
+        else:
+            updates[field] = value
 
     if not updates:
         return {"ok": True}
 
     updates["updated_at"] = datetime.now().isoformat()
-
-    if data.manually_verified is True:
-        updates["manually_verified"] = 1
 
     set_clause = ", ".join(f"{k} = ?" for k in updates)
     values = list(updates.values()) + [lit_id]
@@ -672,7 +684,7 @@ async def reindex_all():
             stats["filled"] += 1
             has_text = True
             # Build doc tree
-            _auto_build_doc_tree(lit_id, elements)
+            _auto_build_doc_tree(lit_id, title, elements)
 
         if not has_text and not elements:
             conn.execute(

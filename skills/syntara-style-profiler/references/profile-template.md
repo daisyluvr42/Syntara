@@ -105,6 +105,7 @@ Use this layout for `profile_markdown`.
 ## 18. Revision Preferences From User Edits
 
 - ...
+- Over-polish patterns to avoid:
 
 ## Appendix: Source Notes
 
@@ -124,4 +125,4 @@ Rules:
 - Do not make the user sound like a caricature. Capture range, not only the loudest traits.
 - Distinguish current preferred style from older or deprecated habits when the corpus spans time.
 - Distinguish "appears in corpus" from "recommended to imitate"; put low-frequency or AI-like phrases under "Use With Caution" or "Avoid".
-- When learning from an original/revised draft pair, put durable editing preferences in section 18 and keep short before/after examples only when they clarify a reusable rule.
+- When learning from an original/revised draft pair, put durable editing preferences in section 18 and keep short before/after examples only when they clarify a reusable rule. Include AI-polish reversals: where the user restored plainer wording, rougher rhythm, colloquial particles, direct repetition, or a less "clever" sentence.

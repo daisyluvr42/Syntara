@@ -9,7 +9,7 @@ from datetime import datetime
 from pathlib import Path
 
 from backend.config import STYLES_DIR
-from backend.db.sqlite import get_connection
+from backend.db.sqlite import get_connection, tag_filter_clause
 from backend.services.extract_cache import load_cached
 from backend.services.ai_provider import chat_completion
 
@@ -205,8 +205,8 @@ def list_style_profiles(project: str | None = None, style_type: str | None = Non
         where.append("project = ?")
         params.append(project)
     if style_type:
-        where.append("tags LIKE ?")
-        params.append(f"%style-type:{_slug(style_type)}%")
+        where.append(tag_filter_clause())
+        params.append(f"style-type:{_slug(style_type)}")
     if where:
         query += " WHERE " + " AND ".join(where)
     query += " ORDER BY is_default DESC, updated_at DESC"
@@ -272,7 +272,7 @@ def _collect_style_sources(
         placeholders = ",".join("?" for _ in corpus_ids)
         rows.extend(conn.execute(f"SELECT * FROM corpus WHERE id IN ({placeholders})", corpus_ids).fetchall())
     if tag:
-        rows.extend(conn.execute("SELECT * FROM corpus WHERE tags LIKE ?", (f"%{tag}%",)).fetchall())
+        rows.extend(conn.execute(f"SELECT * FROM corpus WHERE {tag_filter_clause()}", (tag,)).fetchall())
 
     seen = set()
     for row in rows:

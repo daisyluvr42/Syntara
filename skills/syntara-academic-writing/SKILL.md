@@ -63,7 +63,7 @@ If one of topic, title, or style corpus is missing, ask a concise follow-up befo
 
 8. Draft the chapter section by section. Integrate evidence naturally; do not paste RAG answers as prose. Preserve cite keys returned by Syntara, usually in `[@citekey]` form.
 
-9. Run a final pass for citation discipline, terminology consistency, style fidelity, and unsupported claims. For detailed checks, read `references/evidence-and-citations.md`.
+9. Run a final pass for citation discipline, terminology consistency, style fidelity, unsupported claims, and over-polished AI revision. For detailed checks, read `references/evidence-and-citations.md`. When revising user-owned prose or applying the user's style profile, also apply `../syntara-knowledge-writing/references/human-revision-gate.md`.
 
 ## Chapter Output Shape
 
@@ -76,6 +76,8 @@ Unless the user specifies another format, return:
 - A final "待补证据" list for claims that need more retrieval or manual confirmation.
 
 Avoid excessive bullet points in the final prose unless the source book style clearly uses them. Professional book chapters should usually read as continuous explanatory prose with clear subheads.
+
+When the task is polish or revision rather than first drafting, preserve the user's author hand. Do not turn plain scholarly judgment into slogan, contrast formula, or balanced promotional prose just because it sounds smoother.
 
 ## When Using Syntara MCP
 

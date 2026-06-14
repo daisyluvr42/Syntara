@@ -69,6 +69,8 @@ Do not treat a file title, snippet, intro, or summary as full-text evidence. If 
 
 For detailed source and style rules, read `references/source-style-evidence.md` when the task involves factual claims, citations, style adaptation, or publication-quality output.
 
+For expected MCP tool usage, read `references/syntara-mcp-tools.md`.
+
 ## Writing Flow
 
 Convert the user's prompt into a writing brief:
@@ -87,7 +89,7 @@ Then proceed:
 3. **Structure**: propose the argument path or section sequence.
 4. **Outline**: make section-level claims and evidence needs explicit.
 5. **Body draft**: write naturally for the target genre; do not paste RAG answers.
-6. **Style pass**: align to the resolved style mode and remove generic AI phrasing.
+6. **Style pass**: align to the resolved style mode, remove generic AI phrasing, and run the human revision gate when revising user-owned prose.
 7. **Evidence pass**: check source support, unsupported claims, data, citations, and manual verification points.
 
 ## Style Handling
@@ -139,6 +141,20 @@ Default de-AI pass:
 - replace abstract claims with concrete mechanisms or examples;
 - avoid invented audience thoughts and fake statistics;
 - keep uncertainty and source boundaries visible.
+
+## Human Revision Gate
+
+When polishing, revising, rewriting, or de-AI-ing user-owned prose, read `references/human-revision-gate.md` before the final style pass.
+
+Use it especially when the user says the AI version lost taste, voice, personality, or `人味儿`.
+
+Rules for this pass:
+
+- Change less than feels tempting. If a sentence is merely rough but still carries the author's position, rhythm, or hesitation, keep it.
+- Treat colloquial particles, uneven paragraph breath, plain observations, and odd but intentional phrasing as possible author hand, not defects.
+- Check only the sentences Syntara changed or added. Do not scan untouched user prose as if it were AI output.
+- Avoid replacing the user's plain observation with a prettier metaphor, slogan, balanced contrast, or three-part structure.
+- For sensitive polish tasks, keep a short internal ledger of what changed, why, and whether it can be reverted.
 
 ## Evidence Discipline
 

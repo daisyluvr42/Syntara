@@ -1,3 +1,4 @@
-display_name: Syntara Literature Review
-short_description: Write reviews with project-scoped Syntara evidence.
-default_prompt: Use Syntara Literature Review to synthesize my topic into a cited literature review from the selected Syntara project.
+interface:
+  display_name: "Syntara Literature Review"
+  short_description: "Write reviews with project-scoped Syntara evidence."
+  default_prompt: "Use Syntara Literature Review to synthesize my topic into a cited literature review from the selected Syntara project."

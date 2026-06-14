@@ -79,6 +79,13 @@ If no style reference is provided, use this default:
 - Avoid excessive one-line dramatic paragraphs.
 - Keep examples and caveats close to the claim they explain.
 
+For polish, rewrite, or de-AI tasks over user-owned prose, also apply `human-revision-gate.md`:
+
+- Change only what creates real friction, evidence risk, or style-profile conflict.
+- Treat roughness, repeated words, particles, and uneven rhythm as possible author voice.
+- Check only sentences changed or added by Syntara; do not treat untouched user prose as AI output.
+- If a polished sentence feels more generic than the original, restore the original or make a smaller edit.
+
 If the user asks for the user's own voice, and no style corpus is available, ask for prior drafts or representative paragraphs. For quick drafts, state that the voice pass is provisional.
 
 ## Evidence Notes
@@ -123,3 +130,4 @@ Use whenever the draft includes numbers, exact terms, direct quotes, or citation
 - Creating page numbers or quote locations that the connector did not return.
 - Ignoring the user's requested scope because a broader source is easier to access.
 - Reading style samples directly but failing to save or reuse a Syntara style profile when the task asks for personal voice, style corpus, or durable style setup.
+- Over-polishing user prose until the author's position, rhythm, hesitation, or plainness disappears.

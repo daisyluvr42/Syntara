@@ -60,10 +60,10 @@ async def update_document(doc_id: str, data: DocumentUpdate):
     if not row:
         raise HTTPException(404, "Document not found")
 
-    updates = {}
-    for field, value in data.model_dump(exclude_unset=True).items():
-        if value is not None:
-            updates[field] = value
+    updates = {
+        field: ("" if value is None else value)
+        for field, value in data.model_dump(exclude_unset=True).items()
+    }
     updates["updated_at"] = datetime.now().isoformat()
 
     set_clause = ", ".join(f"{k} = ?" for k in updates)
@@ -81,10 +81,10 @@ async def beacon_save_document(doc_id: str, data: DocumentUpdate):
     if not row:
         raise HTTPException(404, "Document not found")
 
-    updates = {}
-    for field, value in data.model_dump(exclude_unset=True).items():
-        if value is not None:
-            updates[field] = value
+    updates = {
+        field: ("" if value is None else value)
+        for field, value in data.model_dump(exclude_unset=True).items()
+    }
     updates["updated_at"] = datetime.now().isoformat()
 
     set_clause = ", ".join(f"{k} = ?" for k in updates)
@@ -98,6 +98,9 @@ async def beacon_save_document(doc_id: str, data: DocumentUpdate):
 async def delete_document(doc_id: str):
     """Delete a document and its citations."""
     conn = get_connection()
+    row = conn.execute("SELECT id FROM document WHERE id = ?", (doc_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, "Document not found")
     conn.execute("DELETE FROM citation WHERE document_id = ?", (doc_id,))
     conn.execute("DELETE FROM document WHERE id = ?", (doc_id,))
     conn.commit()
