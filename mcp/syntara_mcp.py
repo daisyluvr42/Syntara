@@ -20,10 +20,16 @@ BASE_URL = os.getenv("SYNTARA_BASE_URL", "http://127.0.0.1:8888").rstrip("/")
 TIMEOUT = float(os.getenv("SYNTARA_MCP_TIMEOUT", "60"))
 STYLE_TIMEOUT = float(os.getenv("SYNTARA_MCP_STYLE_TIMEOUT", "180"))
 AUTO_START = os.getenv("SYNTARA_MCP_AUTO_START", "1") != "0"
+IDLE_SECONDS = float(os.getenv("SYNTARA_MCP_IDLE_SECONDS", "3600"))
 BASE_DIR = Path(__file__).resolve().parents[1]
 BACKEND_PROCESS: asyncio.subprocess.Process | None = None
 BACKEND_LOG_FILE: Any | None = None
+BACKEND_STARTED_BY_MCP = False
+BACKEND_ATEXIT_REGISTERED = False
 HTTP_CLIENT: httpx.AsyncClient | None = None
+IDLE_TASK: asyncio.Task | None = None
+ACTIVE_REQUESTS = 0
+LAST_BACKEND_USED_AT = 0.0
 MESSAGE_MODE = "headers"
 SUPPORTED_PROTOCOL_VERSION = "2024-11-05"
 
@@ -164,14 +170,18 @@ TOOLS = AGGREGATE_TOOLS
 
 
 async def http_request(method: str, path: str, timeout: float | None = None, **kwargs: Any) -> Any:
-    await ensure_backend()
-    client = get_http_client()
-    response = await client.request(method, path, timeout=timeout or TIMEOUT, **kwargs)
-    response.raise_for_status()
-    content_type = response.headers.get("content-type", "")
-    if "application/json" in content_type:
-        return response.json()
-    return response.text
+    mark_backend_request_start()
+    try:
+        await ensure_backend()
+        client = get_http_client()
+        response = await client.request(method, path, timeout=timeout or TIMEOUT, **kwargs)
+        response.raise_for_status()
+        content_type = response.headers.get("content-type", "")
+        if "application/json" in content_type:
+            return response.json()
+        return response.text
+    finally:
+        mark_backend_request_end()
 
 
 def get_http_client() -> httpx.AsyncClient:
@@ -179,6 +189,43 @@ def get_http_client() -> httpx.AsyncClient:
     if HTTP_CLIENT is None or HTTP_CLIENT.is_closed:
         HTTP_CLIENT = httpx.AsyncClient(base_url=BASE_URL, timeout=TIMEOUT)
     return HTTP_CLIENT
+
+
+def mark_backend_request_start() -> None:
+    global ACTIVE_REQUESTS
+    ACTIVE_REQUESTS += 1
+
+
+def mark_backend_request_end() -> None:
+    global ACTIVE_REQUESTS, LAST_BACKEND_USED_AT
+    ACTIVE_REQUESTS = max(0, ACTIVE_REQUESTS - 1)
+    LAST_BACKEND_USED_AT = asyncio.get_running_loop().time()
+    schedule_idle_shutdown()
+
+
+def schedule_idle_shutdown() -> None:
+    global IDLE_TASK
+    if IDLE_SECONDS <= 0 or ACTIVE_REQUESTS > 0:
+        return
+    if not BACKEND_STARTED_BY_MCP or not BACKEND_PROCESS or BACKEND_PROCESS.returncode is not None:
+        return
+    if IDLE_TASK is not None and not IDLE_TASK.done():
+        IDLE_TASK.cancel()
+    IDLE_TASK = asyncio.create_task(stop_backend_after_idle())
+
+
+async def stop_backend_after_idle() -> None:
+    while True:
+        if ACTIVE_REQUESTS > 0 or not BACKEND_STARTED_BY_MCP:
+            return
+        if not BACKEND_PROCESS or BACKEND_PROCESS.returncode is not None:
+            return
+        elapsed = asyncio.get_running_loop().time() - LAST_BACKEND_USED_AT
+        remaining = IDLE_SECONDS - elapsed
+        if remaining <= 0:
+            await stop_backend_async()
+            return
+        await asyncio.sleep(remaining)
 
 
 def clean_args(arguments: dict[str, Any] | None) -> dict[str, Any]:
@@ -521,7 +568,7 @@ async def ensure_backend() -> None:
     env["SYNTARA_HOST"] = host
     env["SYNTARA_PORT"] = port
 
-    global BACKEND_LOG_FILE, BACKEND_PROCESS
+    global BACKEND_ATEXIT_REGISTERED, BACKEND_LOG_FILE, BACKEND_PROCESS, BACKEND_STARTED_BY_MCP, LAST_BACKEND_USED_AT
     log_dir = BASE_DIR / "data" / "logs"
     log_dir.mkdir(parents=True, exist_ok=True)
     BACKEND_LOG_FILE = (log_dir / "syntara_mcp_backend.log").open("ab")
@@ -533,7 +580,11 @@ async def ensure_backend() -> None:
         stdout=BACKEND_LOG_FILE,
         stderr=BACKEND_LOG_FILE,
     )
-    atexit.register(stop_backend)
+    BACKEND_STARTED_BY_MCP = True
+    LAST_BACKEND_USED_AT = asyncio.get_running_loop().time()
+    if not BACKEND_ATEXIT_REGISTERED:
+        atexit.register(stop_backend)
+        BACKEND_ATEXIT_REGISTERED = True
 
     for _ in range(40):
         if await backend_healthy():
@@ -544,9 +595,25 @@ async def ensure_backend() -> None:
 
 
 def stop_backend() -> None:
-    global BACKEND_LOG_FILE
-    if BACKEND_PROCESS and BACKEND_PROCESS.returncode is None:
+    global BACKEND_LOG_FILE, BACKEND_STARTED_BY_MCP
+    if BACKEND_STARTED_BY_MCP and BACKEND_PROCESS and BACKEND_PROCESS.returncode is None:
         BACKEND_PROCESS.terminate()
+    BACKEND_STARTED_BY_MCP = False
+    if BACKEND_LOG_FILE:
+        BACKEND_LOG_FILE.close()
+        BACKEND_LOG_FILE = None
+
+
+async def stop_backend_async() -> None:
+    global BACKEND_LOG_FILE, BACKEND_STARTED_BY_MCP
+    if BACKEND_STARTED_BY_MCP and BACKEND_PROCESS and BACKEND_PROCESS.returncode is None:
+        BACKEND_PROCESS.terminate()
+        try:
+            await asyncio.wait_for(BACKEND_PROCESS.wait(), timeout=5)
+        except asyncio.TimeoutError:
+            BACKEND_PROCESS.kill()
+            await BACKEND_PROCESS.wait()
+    BACKEND_STARTED_BY_MCP = False
     if BACKEND_LOG_FILE:
         BACKEND_LOG_FILE.close()
         BACKEND_LOG_FILE = None
