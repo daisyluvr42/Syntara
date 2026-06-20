@@ -113,12 +113,17 @@ AGGREGATE_TOOLS: list[dict[str, Any]] = [
         "inputSchema": {
             "type": "object",
             "properties": {
-                "action": {"type": "string", "enum": ["list", "get", "build", "save", "update_from_revision", "set_default"]},
+                "action": {"type": "string", "enum": ["list", "get", "build", "save", "update", "update_from_revision", "prepare_review", "learn_from_human_review", "set_default"]},
                 "name": {"type": "string"},
                 "project": {"type": "string", "default": "default"},
                 "style_type": {"type": "string"},
                 "profile_id": {"type": "string"},
                 "default": {"type": "boolean", "default": False},
+                "draft_text": {"type": "string", "description": "Draft to review, or the AI draft that human feedback refers to."},
+                "argument_plan": {"type": "string"},
+                "source_package": {"type": "string"},
+                "review_focus": {"type": "array", "items": {"type": "string"}},
+                "style_exemplar_categories": {"type": "array", "items": {"type": "string"}},
                 "corpus_ids": {"type": "array", "items": {"type": "string"}},
                 "tag": {"type": "string"},
                 "content": {"type": "string", "description": "Direct style corpus content from a resolved user-owned boundary."},
@@ -129,6 +134,7 @@ AGGREGATE_TOOLS: list[dict[str, Any]] = [
                 "tags": {"type": "array", "items": {"type": "string"}},
                 "original_text": {"type": "string"},
                 "revised_text": {"type": "string"},
+                "human_feedback": {"type": "string", "description": "Human review comments. Required for learning unless revised_text is present."},
                 "base_profile_id": {"type": "string"},
                 "provider_id": {"type": "string"},
                 "set_default": {"type": "boolean", "default": True},
@@ -388,8 +394,9 @@ async def style_profile_action(args: dict[str, Any]) -> Any:
             params["style_type"] = args["style_type"]
         return await http_request("GET", "/api/style-profiles", params=params)
     if action == "get":
-        if args.get("profile_id"):
-            return await http_request("GET", f"/api/style-profiles/{args['profile_id']}")
+        profile_id = args.get("profile_id") or args.get("id")
+        if profile_id:
+            return await http_request("GET", f"/api/style-profiles/{profile_id}")
         if args.get("default", False) or not args.get("name"):
             return await http_request("GET", "/api/style-profiles/default", params={"project": project})
         profiles = await http_request("GET", "/api/style-profiles", params={"project": project})
@@ -421,26 +428,173 @@ async def style_profile_action(args: dict[str, Any]) -> Any:
             "set_default": args.get("set_default", True),
         }
         return await http_request("POST", "/api/style-profiles", json=payload)
-    if action == "update_from_revision":
+    if action in {"update", "update_from_revision"}:
         payload = {
             "original_text": args["original_text"],
-            "revised_text": args["revised_text"],
             "project": project,
             "set_default": args.get("set_default", True),
         }
+        if args.get("revised_text"):
+            payload["revised_text"] = args["revised_text"]
+        if args.get("human_feedback"):
+            payload["human_feedback"] = args["human_feedback"]
+        if args.get("base_profile_id") is None and args.get("id"):
+            payload["base_profile_id"] = args["id"]
         for key in ("base_profile_id", "name", "style_type", "source_title", "provider_id"):
             if args.get(key):
                 payload[key] = args[key]
         return await http_request("POST", "/api/style-profiles/revision", json=payload, timeout=STYLE_TIMEOUT)
+    if action == "prepare_review":
+        draft_text = args.get("draft_text") or args.get("original_text") or ""
+        if not draft_text.strip():
+            raise ValueError("draft_text is required for prepare_review")
+        profile = await resolve_style_profile(args)
+        exemplars = select_style_exemplars(
+            profile.get("profile_json", {}).get("style_exemplars") or [],
+            args.get("style_exemplar_categories") or [],
+        )
+        return {
+            "ok": True,
+            "action": action,
+            "style_profile": profile_summary(profile),
+            "style_package": {
+                "profile_markdown": clip_text(profile.get("profile_markdown", ""), 12000),
+                "selected_style_exemplars": exemplars,
+                "anti_ai": profile.get("profile_json", {}).get("anti_ai", {}),
+                "revision_preferences": profile.get("profile_json", {}).get("revision_preferences", []),
+            },
+            "review_contract": {
+                "must_use_style_package": True,
+                "review_before_revise": True,
+                "review_memo_only": True,
+                "learning_requires_human_feedback_or_final_text": True,
+            },
+            "review_prompt": build_review_prompt(
+                draft_text=draft_text,
+                argument_plan=args.get("argument_plan", ""),
+                source_package=args.get("source_package", ""),
+                review_focus=args.get("review_focus") or [],
+                profile=profile,
+                exemplars=exemplars,
+            ),
+            "next_step": "Write a review memo first, then a revision plan, then the revised draft. Do not learn until the user provides feedback or a final version.",
+        }
+    if action == "learn_from_human_review":
+        original_text = args.get("original_text") or args.get("draft_text") or ""
+        revised_text = args.get("revised_text") or ""
+        human_feedback = args.get("human_feedback") or ""
+        if not original_text.strip():
+            raise ValueError("original_text or draft_text is required for learning")
+        if not revised_text.strip() and not human_feedback.strip():
+            raise ValueError("human_feedback or revised_text is required for learning")
+        profile = await resolve_style_profile(args)
+        payload = {
+            "original_text": original_text,
+            "project": profile.get("project") or project,
+            "base_profile_id": profile["id"],
+            "source_title": args.get("source_title") or "human-reviewed writing",
+            "set_default": args.get("set_default", True),
+        }
+        if revised_text.strip():
+            payload["revised_text"] = revised_text
+        if human_feedback.strip():
+            payload["human_feedback"] = human_feedback
+        if args.get("provider_id"):
+            payload["provider_id"] = args["provider_id"]
+        return await http_request("POST", "/api/style-profiles/revision", json=payload, timeout=STYLE_TIMEOUT)
     if action == "set_default":
-        if args.get("profile_id"):
-            return await http_request("PUT", f"/api/style-profiles/{args['profile_id']}/default")
+        profile_id = args.get("profile_id") or args.get("id")
+        if profile_id:
+            return await http_request("PUT", f"/api/style-profiles/{profile_id}/default")
         profiles = await http_request("GET", "/api/style-profiles", params={"project": project})
         for item in profiles.get("items", []):
             if item.get("name") == args.get("name"):
                 return await http_request("PUT", f"/api/style-profiles/{item['id']}/default")
         raise ValueError("Style profile not found")
     raise ValueError(f"Unknown style profile action: {action}")
+
+
+async def resolve_style_profile(args: dict[str, Any]) -> dict[str, Any]:
+    profile_id = args.get("profile_id") or args.get("id")
+    if profile_id:
+        return await http_request("GET", f"/api/style-profiles/{profile_id}")
+    project = project_slug(args.get("project", "default"))
+    if args.get("style_type"):
+        profiles = await http_request("GET", "/api/style-profiles", params={"project": project, "style_type": args["style_type"]})
+        items = profiles.get("items", [])
+        if items:
+            return await http_request("GET", f"/api/style-profiles/{items[0]['id']}")
+    return await http_request("GET", "/api/style-profiles/default", params={"project": project})
+
+
+def select_style_exemplars(exemplars: list[Any], categories: list[str], limit: int = 4) -> list[dict[str, Any]]:
+    cleaned = [item for item in exemplars if isinstance(item, dict)]
+    if categories:
+        wanted = {str(category) for category in categories}
+        matched = [item for item in cleaned if str(item.get("category", "")) in wanted]
+        if matched:
+            cleaned = matched
+    return cleaned[:limit]
+
+
+def profile_summary(profile: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": profile.get("id"),
+        "name": profile.get("name"),
+        "project": profile.get("project"),
+        "style_type": profile.get("style_type") or profile.get("profile_json", {}).get("style_type"),
+        "writing_mode": profile.get("profile_json", {}).get("writing_mode"),
+        "exemplar_count": len(profile.get("profile_json", {}).get("style_exemplars") or []),
+    }
+
+
+def build_review_prompt(
+    draft_text: str,
+    argument_plan: str,
+    source_package: str,
+    review_focus: list[str],
+    profile: dict[str, Any],
+    exemplars: list[dict[str, Any]],
+) -> str:
+    focus_text = "\n".join(f"- {item}" for item in review_focus) or "- argument\n- evidence\n- structure\n- style\n- readability"
+    exemplar_text = json.dumps(exemplars, ensure_ascii=False, indent=2)
+    return f"""
+Review this draft before revising it. Do not rewrite yet.
+
+Use the style profile and style exemplars as mandatory review criteria, not optional inspiration.
+
+Return a review memo with:
+1. Argument issues.
+2. Evidence or source-boundary issues.
+3. Structure issues, especially places that copy the input outline instead of forming a real argument path.
+4. Style alignment issues, including where the draft follows formatting but misses voice, judgment rhythm, paragraph breath, or explanation order.
+5. AI-pattern issues.
+6. A revision plan that says what to change and what to preserve.
+
+Review focus:
+{focus_text}
+
+Style profile:
+{clip_text(profile.get("profile_markdown", ""), 12000)}
+
+Selected style exemplars:
+{exemplar_text}
+
+Argument plan:
+{argument_plan or "(not provided)"}
+
+Source package:
+{source_package or "(not provided)"}
+
+Draft:
+{clip_text(draft_text, 30000)}
+""".strip()
+
+
+def clip_text(text: str, max_chars: int) -> str:
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars] + "\n\n[...trimmed...]"
 
 
 def safe_filename(title: str) -> str:

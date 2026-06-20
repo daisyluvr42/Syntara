@@ -8,6 +8,7 @@ Use this layout for `profile_markdown`.
 > Source: <corpus location, date range, source count>.
 > Excluded: <excluded folders/files and reasons, or none>.
 > Project: `<project>`; style_type: `<style_type>`.
+> Writing mode: `<argument | informative-explanatory | narrative | descriptive | mixed>`.
 > Updated: <date>. Previous profile: <id or none>.
 
 ## 1. Source Audit
@@ -16,49 +17,58 @@ Use this layout for `profile_markdown`.
 - Excluded corpus:
 - Sampling strategy:
 - Source consistency check:
+- Taxonomy choice:
 - Main uncertainty:
 
 ## 2. Writer Profile
 
 - ...
 
-## 3. Overall Tone
+## 3. Style Exemplars
+
+Use short user-owned excerpts as writing anchors. Choose only passages that are safe to imitate for rhythm, judgment flow, explanation order, or paragraph breath.
+
+| Category | Use When | Source | Excerpt | Imitation Note |
+|---|---|---|---|---|
+| ... | ... | ... | ... | ... |
+
+## 4. Overall Tone
 
 - ...
 
-## 4. Tone Spectrum
+## 5. Tone Spectrum
 
 | Context / Genre | Tone | Use When | Avoid |
 |---|---|---|---|
 | ... | ... | ... | ... |
 
-## 5. Opening Patterns
+## 6. Opening Patterns
 
 - ...
 
-## 6. Structure And Section Rhythm
+## 7. Structure And Section Rhythm
 
 - ...
 
-## 7. Paragraph And Sentence Rhythm
+## 8. Paragraph And Sentence Rhythm
 
 - ...
 
-## 8. Claim And Argument Style
+## 9. Claim And Argument Style
 
 - ...
 
-## 9. Evidence And Fact Discipline
+## 10. Evidence And Fact Discipline
 
 - ...
 
-## 10. Reader Relationship
+## 11. Reader Relationship
 
 - Person strategy:
 - Expectation management:
 - Epistemic honesty:
 
-## 11. Vocabulary Preferences
+## 12. Vocabulary Preferences
 
 ### Prefer
 
@@ -72,21 +82,21 @@ Use this layout for `profile_markdown`.
 
 - ...
 
-## 12. Formatting And Visual Habits
+## 13. Formatting And Visual Habits
 
 - ...
 
-## 13. Genre Matrix
+## 14. Genre Matrix
 
 | Genre | Opening | Structure | Evidence | Person | Ending |
 |---|---|---|---|---|---|
 | ... | ... | ... | ... | ... | ... |
 
-## 14. Cross-Genre Constants
+## 15. Cross-Genre Constants
 
 - ...
 
-## 15. Style Evolution
+## 16. Style Evolution
 
 - Early:
 - Middle:
@@ -94,15 +104,15 @@ Use this layout for `profile_markdown`.
 - Prioritize:
 - Deprecated habits:
 
-## 16. Anti-AI Checklist
+## 17. Anti-AI Checklist
 
 - ...
 
-## 17. Revision Workflow
+## 18. Revision Workflow
 
 - ...
 
-## 18. Revision Preferences From User Edits
+## 19. Revision Preferences From User Edits
 
 - ...
 - Over-polish patterns to avoid:
@@ -119,10 +129,11 @@ Use this layout for `profile_markdown`.
 Rules:
 
 - Keep the profile actionable for future writing.
-- Do not include long copied passages.
+- Do not include long copied passages. Style exemplar excerpts should stay under 240 Chinese characters each.
 - Use short examples or tight paraphrases to support important rules. Avoid unsupported style adjectives.
 - State uncertainty when the corpus is small or mixed.
 - Do not make the user sound like a caricature. Capture range, not only the loudest traits.
 - Distinguish current preferred style from older or deprecated habits when the corpus spans time.
 - Distinguish "appears in corpus" from "recommended to imitate"; put low-frequency or AI-like phrases under "Use With Caution" or "Avoid".
-- When learning from an original/revised draft pair, put durable editing preferences in section 18 and keep short before/after examples only when they clarify a reusable rule. Include AI-polish reversals: where the user restored plainer wording, rougher rhythm, colloquial particles, direct repetition, or a less "clever" sentence.
+- Style exemplars are anchors for rhythm, structure, and judgment posture. Future drafts should not copy their content unless the user explicitly asks to reuse that text.
+- When learning from an original/revised draft pair, put durable editing preferences in section 19 and keep short before/after examples only when they clarify a reusable rule. Include AI-polish reversals: where the user restored plainer wording, rougher rhythm, colloquial particles, direct repetition, or a less "clever" sentence.

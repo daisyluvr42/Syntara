@@ -45,11 +45,15 @@ Treat style as a separate decision from evidence. A document can be used as fact
 
 For formal writing, check Syntara style profiles before defaulting:
 
-1. Infer `style_type` from the requested output: `wechat-longform`, `professional-book`, `literature-review`, `tutorial`, `report`, `script`, `ppt`, or `general`.
+1. Infer `writing_mode` and `style_type` from the requested output. Use common public taxonomy:
+   - `writing_mode`: `argument`, `informative-explanatory`, `narrative`, `descriptive`, or `mixed`.
+   - `style_type`: `academic-paper`, `abstract`, `literature-review`, `research-proposal`, `review-critique`, `technical-report`, `business-report`, `white-paper`, `proposal`, `memo-email`, `business-letter`, `documentation`, `instructional-guide`, `manual`, `article`, `blog-article`, `op-ed`, `review`, `newsletter`, `social-post`, `presentation`, `talk-script`, `course-script`, `personal-statement`, `reflection`, `creative-nonfiction`, `narrative`, or `general`.
 2. Use `syntara_style_profile` with `action: "list"`, the inferred project, and `style_type` when available.
 3. If no type-specific profile is found, use `syntara_style_profile` with `action: "get"` and `default: true` for the inferred project.
 4. If not found, use `syntara_style_profile` with `action: "list"` without a project filter and choose a clear single/default match.
 5. After choosing a listed profile, call `syntara_style_profile` with `action: "get"` for its id. Do not draft from the list summary alone.
+   - Read `profile_markdown` as the rule brief.
+   - If `profile_json.style_exemplars` exists, choose 2-4 short exemplars that match the current task or passage role.
 6. If no profile exists, run first-use style setup:
    - Search the available user-owned corpus or connected knowledge base for likely style samples: `style-corpus`, `style`, `风格`, `旧文`, `往期文章`, `代表作`, `书稿`, `章节`, `公众号`, `草稿`, `voice`.
    - If the style corpus contains different genres or writing types, group by style type and build separate profiles.
@@ -68,6 +72,15 @@ Before drafting, choose one style mode:
 
 Do not silently skip style. If no style reference or Syntara profile is available, use `default_de_ai` rather than the user's personal voice.
 
+Use the generic public `style_type` values from `syntara-style-profiler/references/style-taxonomy.md` for new profiles. Put platform, topic, or user-specific distinctions in tags, `genre_matrix`, or `style_exemplars.category`, not in `style_type`.
+
+When using style exemplars, treat them as anchors rather than source material:
+
+- Use them to imitate rhythm, judgment posture, explanation order, and paragraph breath.
+- Do not copy their factual content into the new draft.
+- Prefer matching categories such as `opening`, `judgment`, `mechanism`, `counterargument`, `tutorial`, `investment`, `product-note`, `ending`, or `revision-gold`.
+- If no exemplar matches, apply the profile rules without forcing an unrelated sample.
+
 If no style reference is provided, use this default:
 
 - Write like a practitioner sharing a tested workflow.
@@ -79,12 +92,40 @@ If no style reference is provided, use this default:
 - Avoid excessive one-line dramatic paragraphs.
 - Keep examples and caveats close to the claim they explain.
 
+## Review Before Revise
+
+For publication-quality output, review is a required step before revision. The review must use the resolved style profile, not only general writing taste.
+
+Use `syntara_style_profile` with `action: "prepare_review"` after the first draft when the tool is available. The returned review packet should guide the review memo. If the action is unavailable, manually assemble the same inputs: `profile_markdown`, selected `style_exemplars`, anti-AI rules, revision preferences, source package, argument plan, and draft.
+
+The review memo must separate:
+
+- argument problems;
+- evidence/source-boundary problems;
+- structure problems;
+- style/profile/exemplar alignment problems;
+- AI-pattern problems;
+- what to preserve.
+
+Do not revise directly from the review memo. Write a revision plan first, then revise only according to that plan.
+
 For polish, rewrite, or de-AI tasks over user-owned prose, also apply `human-revision-gate.md`:
 
 - Change only what creates real friction, evidence risk, or style-profile conflict.
 - Treat roughness, repeated words, particles, and uneven rhythm as possible author voice.
 - Check only sentences changed or added by Syntara; do not treat untouched user prose as AI output.
 - If a polished sentence feels more generic than the original, restore the original or make a smaller edit.
+
+## Learning Gate
+
+Do not update a Syntara style profile from AI-only review or revision output. Learning requires human material:
+
+- user comments;
+- user review notes;
+- a user-edited/final version;
+- a diff between AI draft and user final text.
+
+When human material is available, use `syntara_style_profile` with `action: "learn_from_human_review"` or the existing revision update. If only AI review or AI revision exists, do not learn yet.
 
 If the user asks for the user's own voice, and no style corpus is available, ask for prior drafts or representative paragraphs. For quick drafts, state that the voice pass is provisional.
 

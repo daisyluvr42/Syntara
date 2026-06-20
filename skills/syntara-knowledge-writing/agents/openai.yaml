@@ -1,4 +1,0 @@
-interface:
-  display_name: "Syntara Knowledge Writing"
-  short_description: "Write from ima, Syntara, and other knowledge bases."
-  default_prompt: "Use $syntara-knowledge-writing to turn my knowledge-base materials into a structured, source-aware draft."

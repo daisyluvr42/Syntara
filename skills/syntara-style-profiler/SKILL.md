@@ -14,11 +14,12 @@ Own:
 - locating user-owned style corpus;
 - grouping corpus by writing type;
 - extracting a structured style profile;
+- selecting short representative style exemplars;
 - learning durable revision preferences from generated drafts and user-edited versions;
 - saving a reusable Markdown + JSON profile with Syntara MCP;
 - setting the correct project default when appropriate.
 
-Do not write the requested article, chapter, review, or deck. After saving the profile, hand off to a writing Skill such as `syntara-knowledge-writing`, `syntara-academic-writing`, or `syntara-literature-review`.
+Do not write the requested article, chapter, review, or deck. After saving the profile, hand off to `syntara-writing`, the unified Syntara writing Skill.
 
 ## Trigger Behavior
 
@@ -42,7 +43,8 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
 1. Resolve scope:
    - Source location: local folder/files, ima knowledge base, Tencent Docs, WorkBuddy `资料库`, or Syntara corpus.
    - Syntara `project`: use the user-specified project, infer from context, or use `default`.
-   - `style_type`: infer from corpus and target form, such as `wechat-longform`, `professional-book`, `literature-review`, `tutorial`, `report`, `script`, `ppt`, or `general`.
+   - `writing_mode`: infer the dominant purpose using `references/style-taxonomy.md`.
+   - `style_type`: infer the reusable document genre using `references/style-taxonomy.md`, such as `blog-article`, `academic-paper`, `literature-review`, `technical-report`, `business-report`, `white-paper`, `proposal`, `memo-email`, `documentation`, `instructional-guide`, `presentation`, `talk-script`, `reflection`, or `general`.
 
 2. Inventory the corpus:
    - List files/documents first.
@@ -50,7 +52,7 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
    - Treat an explicit user-provided path or file list as the corpus boundary. Do not search the current workspace, sibling folders, or earlier candidate folders for extra style samples unless the user asks to broaden the corpus.
    - Prefer user-owned prose. Do not treat literature PDFs, research sources, or third-party examples as user voice unless the user explicitly asks to imitate them.
    - Apply inclusion/exclusion rules only when the user states them or the corpus has an explicit manifest/readme that marks documents to include or exclude. Record the rule used.
-   - If the corpus mixes genres, group by `style_type` and build separate profiles. Do not merge professional chapters, public essays, tutorials, slide scripts, and social posts into one profile unless the user asks for a house style.
+   - If the corpus mixes genres, group by common `style_type` and build separate profiles. Do not merge academic papers, reports, instructions, public articles, presentations, social posts, and personal reflections into one profile unless the user asks for a house style.
    - Record both included and excluded source counts. `source_count` must equal the number of included files actually analyzed, and `source_titles` must be real included filenames/ids.
 
 3. Read enough material:
@@ -77,22 +79,27 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
    - vocabulary preferences;
    - banned words, phrases, and AI-like moves;
    - formatting and visual habits;
+   - common `writing_mode` and `style_type`;
    - cross-genre constants;
    - genre-specific variants;
    - style evolution and sample priority;
+   - representative style exemplars for matching future tasks;
    - revision and final-pass checklist.
    For each important rule, include source evidence: at least one source filename and a short example or paraphrased example. Distinguish "appears in corpus" from "recommended preference"; do not promote low-frequency or user-disfavored AI-like phrases into positive lexicon preferences.
+   Also select 3-8 short user-owned passages as `style_exemplars` when the corpus supports it. Use categories such as `opening`, `judgment`, `mechanism`, `transition`, `counterargument`, `tutorial`, `investment`, `product-note`, `ending`, or `revision-gold`. Each excerpt should be under 240 Chinese characters and paired with a note explaining the reusable rhythm, judgment posture, or structural move. Do not store third-party factual source passages as user voice exemplars.
 
 6. Produce `profile_json`:
    - Use the schema in `references/profile-schema.md`.
+   - Use the common taxonomy in `references/style-taxonomy.md`.
    - Keep JSON compact and practical. Put long explanations in Markdown, not JSON.
-   - Include `source_count`, `source_titles`, `project`, `style_type`, and `updated_from_profile_id` when applicable.
-   - Include `source.excluded_sources`, `evidence`, `tone_spectrum`, `genre_matrix`, `reader_relationship`, and `style_evolution` when the corpus supports them.
+   - Include `source_count`, `source_titles`, `project`, `style_type`, `writing_mode`, and `updated_from_profile_id` when applicable.
+   - Include `source.excluded_sources`, `style_exemplars`, `evidence`, `tone_spectrum`, `genre_matrix`, `reader_relationship`, and `style_evolution` when the corpus supports them.
    - Validate source consistency before saving: every `source_titles` entry must belong to the resolved corpus, user-excluded files must not appear in `source_titles`, and counts must match.
 
 7. Produce `profile_markdown`:
    - Use `references/profile-template.md`.
    - The Markdown must be directly usable as a writing brief.
+   - Include a `Style Exemplars` section with the selected short excerpts, their categories, source titles, and imitation notes.
    - Include concrete examples or tight paraphrases for the most important rules. Prefer short evidence over unsupported adjectives.
    - Include a source audit note: corpus path, included count, excluded count, sample strategy, and any uncertainty.
 
@@ -108,7 +115,7 @@ Do not save an empty `{}` profile_json unless the user explicitly asks for Markd
 
 ## Revision Diff Workflow
 
-Use this branch when the user says they edited the generated article/chapter/deck script, or sends an "original vs revised" pair.
+Use this branch when the user says they edited the generated article/chapter/deck script, sends an "original vs revised" pair, or gives explicit review feedback on an AI draft.
 
 1. Resolve the target style profile:
    - Use the user's `base_profile_id` if provided.
@@ -121,10 +128,12 @@ Use this branch when the user says they edited the generated article/chapter/dec
    - Prefer durable preferences over one-off edits.
    - Pay special attention to AI-polish reversals: places where the user restored plainer wording, rougher rhythm, colloquial particles, direct repetition, hesitation, or a less "clever" sentence.
    - Record rejected AI-like moves such as meaning inflation, forced contrasts, slogan endings, invented scene/detail, decorative formatting, and over-balanced structures.
+   - When the revised/final version contains a compact passage that should guide future drafts, add it as a `revision-gold` style exemplar instead of only describing it as a rule.
 
-3. Call `syntara_style_profile` with `action: "update_from_revision"` and:
+3. Call `syntara_style_profile` with `action: "learn_from_human_review"` when learning from a reviewed draft, or `action: "update_from_revision"` for a direct original/final pair:
    - `original_text`: the AI/generated draft before user edits.
-   - `revised_text`: the user's edited/final version.
+   - `revised_text`: the user's edited/final version, when available.
+   - `human_feedback`: the user's comments or review notes, when available.
    - `base_profile_id` when available.
    - `project`, `style_type`, `source_title`, and `set_default: true` unless the user asks not to update defaults.
 
@@ -137,6 +146,7 @@ Use this branch when the user says they edited the generated article/chapter/dec
 ## Safety Rules
 
 - Never fabricate style traits that are not supported by the corpus.
+- Never learn from AI-only review memos, AI revision plans, or AI second drafts. Learning requires user feedback or user-edited text.
 - Do not overfit one unusual article unless the user selected it as the style target.
 - Do not turn factual sources into user voice.
 - Do not overwrite the old profile in place unless Syntara MCP explicitly supports update semantics. Saving a new version and making it default is acceptable.
@@ -147,3 +157,4 @@ Use this branch when the user says they edited the generated article/chapter/dec
 
 - `references/profile-schema.md`: required JSON shape.
 - `references/profile-template.md`: Markdown profile layout.
+- `references/style-taxonomy.md`: common writing modes and public style_type values.

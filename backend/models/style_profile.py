@@ -32,7 +32,8 @@ class StyleProfileSaveRequest(BaseModel):
 
 class StyleProfileRevisionRequest(BaseModel):
     original_text: str
-    revised_text: str
+    revised_text: str | None = None
+    human_feedback: str | None = None
     base_profile_id: str | None = None
     name: str | None = None
     project: str = "default"

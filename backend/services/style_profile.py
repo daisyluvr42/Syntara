@@ -18,6 +18,7 @@ MAX_STYLE_CORPUS_CHARS = 60000
 PROFILE_MAX_TOKENS = 8192
 PROFILE_REQUIRED_KEYS = [
     "source",
+    "writing_mode",
     "writer_profile",
     "tone",
     "tone_spectrum",
@@ -28,6 +29,7 @@ PROFILE_REQUIRED_KEYS = [
     "lexicon",
     "formatting",
     "anti_ai",
+    "style_exemplars",
     "evidence",
     "genre_matrix",
     "cross_genre_constants",
@@ -49,6 +51,7 @@ async def build_style_profile(
     provider_id: str | None = None,
     set_default: bool = True,
 ) -> dict:
+    style_type = _slug(style_type) if style_type else None
     source_texts, source_ids, source_titles = _collect_style_sources(corpus_ids or [], tag, content, source_title)
     combined = _prepare_style_corpus(source_texts)
     if not combined.strip():
@@ -80,7 +83,8 @@ async def build_style_profile(
 
 async def update_style_profile_from_revision(
     original_text: str,
-    revised_text: str,
+    revised_text: str | None = None,
+    human_feedback: str | None = None,
     base_profile_id: str | None = None,
     name: str | None = None,
     project: str = "default",
@@ -89,8 +93,11 @@ async def update_style_profile_from_revision(
     provider_id: str | None = None,
     set_default: bool = True,
 ) -> dict:
-    if not original_text.strip() or not revised_text.strip():
-        raise ValueError("original_text and revised_text are required")
+    style_type = _slug(style_type) if style_type else None
+    if not original_text.strip():
+        raise ValueError("original_text is required")
+    if not (revised_text or "").strip() and not (human_feedback or "").strip():
+        raise ValueError("human revised text or human feedback is required")
 
     base_profile = _get_base_profile(base_profile_id, project)
     profile_name = name or (base_profile["name"] if base_profile else "Revision-learned style profile")
@@ -99,7 +106,8 @@ async def update_style_profile_from_revision(
 
     revision = await _extract_revision_preferences(
         original_text=_trim_corpus(original_text),
-        revised_text=_trim_corpus(revised_text),
+        revised_text=_trim_corpus(revised_text or ""),
+        human_feedback=_trim_corpus(human_feedback or ""),
         base_profile=base_profile,
         source_title=source_title,
         provider_id=provider_id,
@@ -147,8 +155,9 @@ def save_style_profile(
     profile_id = str(uuid.uuid4())
     now = datetime.now().isoformat()
     profile_json = profile_json or {}
+    style_type = _slug(style_type) if style_type else None
     if style_type:
-        profile_json.setdefault("style_type", style_type)
+        profile_json["style_type"] = style_type
 
     final_tags = ["style-profile", f"project:{project}"]
     if style_type:
@@ -315,7 +324,8 @@ async def _extract_profile_json(
   "schema": "syntara.style_profile.v1",
   "name": "示例风格",
   "project": "default",
-  "style_type": "wechat-longform",
+  "style_type": "blog-article",
+  "writing_mode": "argument",
   "source": {"path_or_id": "示例语料", "source_count": 2, "source_titles": ["A.md"], "excluded_sources": [], "sample_strategy": "mcp-build"},
   "writer_profile": {"summary": "机制型解释者", "voice_origin": ["行业经验"], "do_not_assume": []},
   "tone": {"summary": "克制、判断明确"},
@@ -327,6 +337,15 @@ async def _extract_profile_json(
   "lexicon": {"prefer": [], "avoid": [], "english_usage": "", "caution": []},
   "formatting": {"headings": "", "bold": "", "tables": "", "quotes": ""},
   "anti_ai": {"banned_moves": [], "final_checklist": []},
+  "style_exemplars": [
+    {
+      "category": "judgment",
+      "use_when": "需要先给判断再解释",
+      "source_title": "A.md",
+      "excerpt": "不超过 240 个中文字符的原文短摘录",
+      "imitation_note": "模仿判断推进和句子节奏，不复制内容"
+    }
+  ],
   "evidence": [{"rule": "先框架后判断", "source_title": "A.md", "example": "短例或转述", "note": "why it matters"}],
   "genre_matrix": {"教程": {"opening": "", "structure": "", "evidence": "", "person": "", "ending": "", "tone": ""}},
   "cross_genre_constants": [],
@@ -352,6 +371,7 @@ The JSON object must follow `syntara.style_profile.v1` and use these practical k
 - name
 - project
 - style_type
+- writing_mode
 - source: object with path_or_id, source_count, source_titles, excluded_sources, sample_strategy
 - writer_profile
 - tone
@@ -363,6 +383,7 @@ The JSON object must follow `syntara.style_profile.v1` and use these practical k
 - lexicon
 - formatting
 - anti_ai
+- style_exemplars
 - evidence
 - genre_matrix
 - cross_genre_constants
@@ -378,6 +399,10 @@ Example shape:
 
 Write `reusable_markdown_profile` in Chinese, shaped like a compact style document a writing Skill can follow.
 Do not copy long source passages. Extract habits, rules, and constraints.
+Use common public taxonomy for classification. `writing_mode` must be one of argument, informative-explanatory, narrative, descriptive, or mixed. Prefer generic `style_type` values such as academic-paper, abstract, literature-review, research-proposal, review-critique, technical-report, business-report, white-paper, proposal, memo-email, business-letter, documentation, instructional-guide, manual, article, blog-article, op-ed, review, newsletter, social-post, presentation, talk-script, course-script, personal-statement, reflection, creative-nonfiction, narrative, or general.
+Avoid user-specific style_type values. Put narrower topical distinctions in genre_matrix, tags, evidence, or style_exemplars.category.
+Also extract 3-8 `style_exemplars` when the corpus supports them. Each exemplar must be a short original user-owned excerpt, no more than 240 Chinese characters, tagged with one category such as opening, judgment, mechanism, transition, counterargument, tutorial, investment, product-note, ending, or revision-gold.
+Use `style_exemplars` as rhythm and judgment anchors for future writing, not as quotable content.
 Tie important claims to short examples or tight paraphrases in `evidence`.
 Distinguish "appears in corpus" from "recommended to imitate".
 Do not include source titles outside the provided source list.
@@ -411,6 +436,7 @@ Style corpus:
 async def _extract_revision_preferences(
     original_text: str,
     revised_text: str,
+    human_feedback: str,
     base_profile: dict | None,
     source_title: str | None,
     provider_id: str | None,
@@ -419,7 +445,7 @@ async def _extract_revision_preferences(
     base_markdown = base_profile["profile_markdown"] if base_profile else ""
     prompt = f"""
 You update a reusable Syntara Chinese writing style profile from a user's revision.
-Compare ORIGINAL DRAFT and USER REVISED VERSION. Infer only durable user editing preferences.
+Compare ORIGINAL DRAFT with USER REVISED VERSION and/or USER FEEDBACK. Infer only durable user editing preferences.
 Return strict JSON only. No markdown fence.
 
 Source title: {source_title or "revision pair"}
@@ -431,13 +457,16 @@ Existing profile Markdown:
 
 Required JSON keys:
 - revision_summary: concise Chinese summary of what the user changed.
-- profile_json_patch: partial JSON to merge into the existing Syntara style profile. Use existing schema keys where possible, especially tone, tone_spectrum, structure, rhythm, argumentation, reader_relationship, lexicon, formatting, anti_ai, evidence, genre_matrix, style_evolution, revision_workflow.
+- profile_json_patch: partial JSON to merge into the existing Syntara style profile. Use existing schema keys where possible, especially tone, tone_spectrum, structure, rhythm, argumentation, reader_relationship, lexicon, formatting, anti_ai, style_exemplars, evidence, genre_matrix, style_evolution, revision_workflow.
 - revision_preferences: object with do, avoid, sentence_level, structure_level, diction_level, evidence_level, formatting_level, examples.
 - reusable_markdown_addendum: Chinese Markdown section to append to the existing profile. It must be directly usable as writing instructions.
 
 Rules:
+- Learn only from human-provided material. Do not infer preferences from an AI self-review, AI revision plan, or AI-generated second draft.
 - Treat factual additions as evidence discipline only, not as style facts.
 - Do not copy long passages. Examples must be short before/after snippets.
+- If the user's revised version contains a strong reusable voice anchor, add a short `revision-gold` item to profile_json_patch.style_exemplars. Keep the excerpt under 240 Chinese characters.
+- If only user feedback is provided and no user revised text exists, do not add `revision-gold`; update revision preferences and anti_ai/style rules only.
 - Focus on user choices: what they deleted, compressed, expanded, reordered, renamed, softened, sharpened, or made more concrete.
 - If the difference is small, say confidence is low in revision_preferences.
 
@@ -445,7 +474,10 @@ ORIGINAL DRAFT:
 {original_text}
 
 USER REVISED VERSION:
-{revised_text}
+{revised_text or "(not provided)"}
+
+USER FEEDBACK:
+{human_feedback or "(not provided)"}
 """.strip()
     raw = await chat_completion(
         provider_id,
@@ -494,6 +526,7 @@ def _merge_revision_into_profile(
         None,
         base_profile_id,
     ).strip()
+    _normalize_profile_shape(merged)
     return merged
 
 
@@ -577,6 +610,8 @@ def _normalize_profile_shape(profile: dict) -> None:
 def _zero_value_for_profile_key(key: str):
     if key == "source":
         return {"path_or_id": "", "source_count": 0, "source_titles": [], "excluded_sources": [], "sample_strategy": ""}
+    if key == "writing_mode":
+        return "mixed"
     if key == "writer_profile":
         return {"summary": "", "voice_origin": [], "do_not_assume": []}
     if key == "tone":
@@ -595,6 +630,8 @@ def _zero_value_for_profile_key(key: str):
         return {"headings": "", "bold": "", "tables": "", "quotes": ""}
     if key == "anti_ai":
         return {"banned_moves": [], "final_checklist": []}
+    if key == "style_exemplars":
+        return []
     if key == "style_evolution":
         return {"periods": [], "current_priority": "", "deprecated_habits": []}
     if key == "revision_workflow":
@@ -692,6 +729,7 @@ def _summary_from_row(row) -> dict:
 def _profile_from_row(row) -> dict:
     item = dict(row)
     item["profile_json"] = json.loads(item["profile_json"] or "{}")
+    _normalize_profile_shape(item["profile_json"])
     item["style_type"] = item["profile_json"].get("style_type") or _style_type_from_tags(json.loads(item["tags"] or "[]"))
     item["source_corpus_ids"] = json.loads(item["source_corpus_ids"] or "[]")
     item["tags"] = json.loads(item["tags"] or "[]")

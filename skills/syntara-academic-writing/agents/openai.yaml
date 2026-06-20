@@ -1,4 +1,0 @@
-interface:
-  display_name: "Syntara Academic Writing"
-  short_description: "Draft professional chapters with Syntara evidence."
-  default_prompt: "Use Syntara Academic Writing to turn my topic, outline, and style corpus into a cited professional book chapter draft."

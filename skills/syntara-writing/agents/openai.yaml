@@ -1,0 +1,4 @@
+interface:
+  display_name: "Syntara Writing"
+  short_description: "Write articles, chapters, reviews, reports, and scripts from Syntara sources."
+  default_prompt: "Use $syntara-writing to turn my knowledge-base materials into a structured, source-aware draft."

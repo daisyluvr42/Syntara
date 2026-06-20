@@ -28,11 +28,14 @@ LEGACY_PROJECT_TRAE_SKILLS_DIR = ROOT / ".trae" / "skills"
 TARGETS = ("workbuddy", "trae")
 WORKBUDDY_SKILLS = {
     "syntara-style-profiler": "Syntara 风格档案",
+    "syntara-writing": "Syntara 写作",
+}
+TRAE_SKILLS = list(WORKBUDDY_SKILLS)
+RETIRED_SKILLS = {
     "syntara-knowledge-writing": "Syntara 资料写作",
     "syntara-academic-writing": "Syntara 学术书籍写作",
     "syntara-literature-review": "Syntara 文献综述",
 }
-TRAE_SKILLS = list(WORKBUDDY_SKILLS)
 
 
 def read_config(path: Path, label: str) -> dict:
@@ -102,6 +105,10 @@ def install_workbuddy_skills() -> list[str]:
     WORKBUDDY_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
     installed: list[str] = []
     installed_at = int(time.time() * 1000)
+    for skill_name in RETIRED_SKILLS:
+        dst = WORKBUDDY_SKILLS_DIR / skill_name
+        if dst.exists():
+            shutil.rmtree(dst)
     for skill_name, display_name in WORKBUDDY_SKILLS.items():
         src = ROOT / "skills" / skill_name
         if not src.exists():
@@ -125,7 +132,8 @@ def install_workbuddy_skills() -> list[str]:
 
 def uninstall_workbuddy_skills() -> list[str]:
     removed: list[str] = []
-    for skill_name, display_name in WORKBUDDY_SKILLS.items():
+    all_skills = {**WORKBUDDY_SKILLS, **RETIRED_SKILLS}
+    for skill_name, display_name in all_skills.items():
         dst = WORKBUDDY_SKILLS_DIR / skill_name
         if dst.exists():
             shutil.rmtree(dst)
@@ -136,6 +144,10 @@ def uninstall_workbuddy_skills() -> list[str]:
 def install_trae_skills() -> list[str]:
     TRAE_GLOBAL_SKILLS_DIR.mkdir(parents=True, exist_ok=True)
     installed: list[str] = []
+    for skill_name in RETIRED_SKILLS:
+        dst = TRAE_GLOBAL_SKILLS_DIR / skill_name
+        if dst.exists():
+            shutil.rmtree(dst)
     for skill_name in TRAE_SKILLS:
         src = ROOT / "skills" / skill_name
         if not src.exists():
@@ -151,7 +163,7 @@ def install_trae_skills() -> list[str]:
 def uninstall_trae_skills() -> list[str]:
     removed: list[str] = []
     for skills_dir in [TRAE_GLOBAL_SKILLS_DIR, LEGACY_PROJECT_TRAE_SKILLS_DIR]:
-        for skill_name in TRAE_SKILLS:
+        for skill_name in [*TRAE_SKILLS, *RETIRED_SKILLS]:
             dst = skills_dir / skill_name
             if dst.exists():
                 shutil.rmtree(dst)
@@ -393,7 +405,7 @@ def add_common_install_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--style-type",
         default="general",
-        help="Writing type, such as wechat-longform, professional-book, literature-review, tutorial, ppt.",
+        help="Writing type, such as blog-article, literature-review, manual, instructional-guide, presentation, or general.",
     )
     parser.add_argument("--no-default-style", action="store_true", help="Do not set the imported style as project default.")
     parser.add_argument("--setup-style", action="store_true", help="Prompt for a style file path after installing MCP.")
